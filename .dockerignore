@@ -1,0 +1,8 @@
+.husky
+.commitlintrc.ts
+.eslint*
+.git*
+.npm*
+.prettier*
+knip.ts
+README.md

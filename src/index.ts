@@ -292,7 +292,6 @@ logger.info(`Listening to HTTP server on port ${process.env.PORT ?? PORT}.`);
 
 process.on('uncaughtException', sendError);
 process.on('unhandledRejection', sendError);
-process.on('rejectionHandled', sendError);
 logger.debug('Set up error handling.');
 
 logger.info('Process setup complete.');

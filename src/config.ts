@@ -1,9 +1,9 @@
 import { PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 
 // % Production
-// export const clientId = '1150536178714554459';
+export const clientId = '1150536178714554459';
 // % Development
-export const clientId = '1034561538721325056';
+// export const clientId = '1034561538721325056';
 
 export const permissionsBits = new PermissionsBitField().add(
 	PermissionFlagsBits.AddReactions,

@@ -36,5 +36,6 @@ export enum DatabaseKeys {
 	Devs = 'devs',
 	Blacklist = 'blacklist',
 	Bday = 'bday',
-	GuildConfig = 'guildConfig'
+	GuildConfig = 'guildConfig',
+	ErrorLog = 'errorLog'
 }

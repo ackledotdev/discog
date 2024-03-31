@@ -3,6 +3,8 @@ import {
 	ActivityType,
 	CategoryChannel,
 	ChannelType,
+	Colors,
+	EmbedBuilder,
 	Events,
 	ForumChannel,
 	GatewayIntentBits,
@@ -10,7 +12,9 @@ import {
 	OAuth2Scopes,
 	PresenceUpdateStatus,
 	Snowflake,
+	TimestampStyles,
 	codeBlock,
+	time,
 	userMention
 } from 'discord.js';
 import { CommandClient } from './struct/discord/Extend';
@@ -35,7 +39,6 @@ if (argv.includes('-d')) {
 	logger.debug('Debug mode enabled.');
 }
 
-// const devdb = new TypedJsoning<Snowflake[]>('botfiles/dev.db.json');
 const db = await openKv(DENO_KV_URL);
 logger.debug('Loaded dev database.');
 
@@ -287,6 +290,11 @@ logger.debug('Scheduled birthday interval.');
 server.listen(process.env.PORT ?? PORT);
 logger.info(`Listening to HTTP server on port ${process.env.PORT ?? PORT}.`);
 
+process.on('uncaughtException', sendError);
+process.on('unhandledRejection', sendError);
+process.on('rejectionHandled', sendError);
+logger.debug('Set up error handling.');
+
 logger.info('Process setup complete.');
 
 async function bdayInterval() {
@@ -337,5 +345,32 @@ async function bdayInterval() {
 			];
 			await channel.send(replies[Math.floor(replies.length * Math.random())]);
 		}
+	}
+}
+
+async function sendError(e: Error) {
+	for (const devId of (await db.get<Snowflake[]>([DatabaseKeys.Devs]))?.value ??
+		[]) {
+		client.users.fetch(devId).then(user => {
+			const date = new Date();
+			user.send({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle('Error Log')
+						.setDescription(e.message)
+						.addFields({ name: 'Stack Trace', value: codeBlock(e.stack ?? '') })
+						.addFields({
+							name: 'ISO 8601 Timestamp',
+							value: date.toISOString()
+						})
+						.addFields({
+							name: 'Localized DateTime',
+							value: time(date, TimestampStyles.LongDateTime)
+						})
+						.setColor(Colors.Red)
+						.setTimestamp()
+				]
+			});
+		});
 	}
 }

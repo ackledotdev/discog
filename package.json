@@ -41,7 +41,7 @@
 	"private": true,
 	"scripts": {
 		"build-commands": "tsx scripts/buildCommands.ts",
-		"build-image": "docker build -t akpi816218/discog . && docker push akpi816218/docker",
+		"build-image": "docker build -t akpi816218/discog . && docker push akpi816218/discog",
 		"check": "tsc",
 		"deploy": "npm ci && npm start",
 		"deploy-full": "npm ci && npm urn build-commands && npm start",

@@ -3,7 +3,6 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	ChatInputCommandInteraction,
-	EmbedBuilder,
 	Guild,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
@@ -301,11 +300,11 @@ const handlers = {
 };
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+	await interaction.deferReply({
+		ephemeral: true
+	});
 	const subcommandGroup =
 		interaction.options.getSubcommandGroup() as keyof typeof handlers;
-	await interaction.deferReply({
-		ephemeral: !subcommandGroup && !interaction.options.getSubcommand()
-	});
 	if (subcommandGroup === 'addrole')
 		await handlers.addrole[
 			interaction.options.getSubcommand(true) as keyof typeof handlers.addrole
@@ -314,12 +313,5 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 		await handlers.channel[
 			interaction.options.getSubcommand(true) as keyof typeof handlers.channel
 		](interaction);
-	await interaction.editReply({
-		embeds: [
-			new EmbedBuilder().setFooter({
-				iconURL: interaction.client.user.displayAvatarURL(),
-				text: 'Powered by DisCog'
-			})
-		]
-	});
+	await interaction.editReply('Done!');
 };

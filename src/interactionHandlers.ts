@@ -145,6 +145,7 @@ export const InteractionHandlers = {
 	async ModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
 		switch (interaction.customId) {
 			case '/contact_suggestion': {
+				await interaction.deferReply({ ephemeral: true });
 				const devs =
 						(await db.get<Snowflake[]>([DatabaseKeys.Devs])).value ?? [],
 					suggestion = interaction.fields.getTextInputValue('suggestion');
@@ -167,6 +168,9 @@ export const InteractionHandlers = {
 						]
 					});
 				}
+				await interaction.editReply(
+					'Your suggestion sent to developers! Thanks so much for helping us improve this bot!'
+				);
 				break;
 			}
 			case '/global': {

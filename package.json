@@ -8,13 +8,13 @@
 		"discord.js": "^14.14.1",
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
+		"jsoning": "^1.0.1",
 		"node-fetch": "^3.3.2",
 		"node-schedule": "^2.1.1",
 		"octokit": "^3.1.2",
 		"pino": "^8.19.0",
 		"pino-pretty": "^11.0.0",
-		"qrcode": "^1.5.3",
-		"typed-jsoning": "^1.0.3"
+		"qrcode": "^1.5.3"
 	},
 	"description": "",
 	"devDependencies": {

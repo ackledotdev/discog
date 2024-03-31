@@ -4,16 +4,11 @@ import {
 	SlashCommandBuilder,
 	inlineCode
 } from 'discord.js';
-import {
-	CommandHelpEntry,
-	SerializedCommandHelpEntry
-} from '../struct/CommandHelpEntry';
-import TypedJsoning from 'typed-jsoning';
+import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { Jsoning } from 'jsoning';
 import { Collection } from '@discordjs/collection';
 
-const db = new TypedJsoning<SerializedCommandHelpEntry>(
-	'botfiles/cmnds.db.json'
-);
+const db = new Jsoning('botfiles/cmnds.db.json');
 
 export const help = new CommandHelpEntry(
 	'coghelp',

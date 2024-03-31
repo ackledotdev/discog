@@ -28,9 +28,8 @@ import { fileURLToPath } from 'url';
 import { logger } from './logger';
 import { readdirSync } from 'fs';
 import { scheduleJob } from 'node-schedule';
-import { SerializedCommandHelpEntry } from './struct/CommandHelpEntry';
 import { openKv } from '@deno/kv';
-import TypedJsoning from 'typed-jsoning';
+import { Jsoning } from 'jsoning';
 
 argv.shift();
 argv.shift();
@@ -130,15 +129,18 @@ const commandFiles = readdirSync(commandsPath).filter(file =>
 	file.endsWith('.ts')
 );
 logger.debug('Loaded command files.');
-const cmndb = new TypedJsoning<SerializedCommandHelpEntry>(
-	'botfiles/cmnds.db.json'
-);
+const cmndb = new Jsoning('botfiles/cmnds.db.json');
 for (const file of commandFiles) {
 	const filePath = join(commandsPath, file);
 	logger.debug(`Loading command ${filePath}`);
 	const command: Command = await import(filePath);
 	client.commands.set(command.data.name, command);
-	if (command.help) await cmndb.set(command.data.name, command.help.toJSON());
+	if (command.help)
+		await cmndb.set(
+			command.data.name,
+			// @ts-expect-error types
+			command.help.toJSON()
+		);
 }
 client.commands.freeze();
 logger.info('Loaded commands.');
@@ -297,7 +299,7 @@ logger.debug('Set up error handling.');
 logger.info('Process setup complete.');
 
 async function bdayInterval() {
-	const db = new TypedJsoning<string>('botfiles/bday.db.json');
+	const db = new Jsoning('botfiles/bday.db.json');
 	const today = new Date();
 	const allBirthdays = Object.entries(db.all());
 	const birthdaysToday = allBirthdays.filter(([, bday]) => {

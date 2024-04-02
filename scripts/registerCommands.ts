@@ -3,8 +3,7 @@ import { dirname, join } from 'path';
 import { clientId } from '../src/config';
 import { fileURLToPath } from 'url';
 import { readdir } from 'fs/promises';
-import TypedJsoning from 'typed-jsoning';
-import { SerializedCommandHelpEntry } from '../src/struct/CommandHelpEntry';
+import Jsoning, { JSONValue } from 'jsoning';
 import { Command } from '../src/struct/discord/types';
 
 export const commandsPath = join(
@@ -26,13 +25,15 @@ export async function registerCommands(
 	commandFiles =
 		commandFiles ??
 		(await readdir(commandsPath)).filter(file => file.endsWith('.ts'));
-	const cmndb = new TypedJsoning<SerializedCommandHelpEntry>(
-		'botfiles/cmnds.db.json'
-	);
+	const cmndb = new Jsoning('botfiles/cmnds.db.json');
 	for (const file of commandFiles) {
 		const filePath = join(commandsPath, file);
 		const command: Command = await import(filePath);
-		if (command.help) cmndb.set(command.data.name, command.help.toJSON());
+		if (command.help)
+			cmndb.set(
+				command.data.name,
+				command.help.toJSON() as unknown as JSONValue
+			);
 	}
 	const commands = [];
 	for (const file of commandFiles)

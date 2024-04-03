@@ -30,6 +30,7 @@ import { readdirSync } from 'fs';
 import { scheduleJob } from 'node-schedule';
 import { openKv } from '@deno/kv';
 import { Jsoning } from 'jsoning';
+import { BirthdayData } from './struct/database';
 
 argv.shift();
 argv.shift();
@@ -299,17 +300,18 @@ logger.debug('Set up error handling.');
 logger.info('Process setup complete.');
 
 async function bdayInterval() {
-	const db = new Jsoning('botfiles/bday.db.json');
 	const today = new Date();
-	const allBirthdays = Object.entries(db.all());
-	const birthdaysToday = allBirthdays.filter(([, bday]) => {
-		const bdaydate = new Date(bday);
-		return (
-			bdaydate.getMonth() == today.getMonth() &&
-			bdaydate.getDate() == today.getDate()
-		);
-	});
-	for (const [id] of birthdaysToday) {
+	const allBirthdays: { id: string; data: BirthdayData }[] = [];
+	for await (const val of db.list({ prefix: [DatabaseKeys.Bday] }))
+		allBirthdays.push({
+			id: val.key[1].toString(),
+			data: val.value as BirthdayData
+		});
+	const birthdaysToday = allBirthdays.filter(
+		({ data }) =>
+			data.month == today.getMonth() + 1 && data.date == today.getDate()
+	);
+	for (const { id } of birthdaysToday) {
 		const user = await client.users.fetch(id);
 		for (let guild of client.guilds.cache.values()) {
 			guild = await guild.fetch();

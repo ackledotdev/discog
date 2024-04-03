@@ -21,9 +21,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 		components: [
 			new ActionRowBuilder<ButtonBuilder>().setComponents(
 				new ButtonBuilder()
-					.setURL(
-						'https://sry-but-not-accepting-donations-rn-but-tysm-anyway.com'
-					)
+					.setURL('https://discog.localplayer.dev/donate/')
 					.setStyle(ButtonStyle.Link)
 					.setLabel('Donate')
 			)

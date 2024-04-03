@@ -76,3 +76,8 @@ export interface PopulatedGuildConfig extends BaseGuildConfig {
 		  };
 	systemchannel: Snowflake | null;
 }
+
+export interface BirthdayData {
+	month: number;
+	date: number;
+}

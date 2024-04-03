@@ -7,6 +7,7 @@ import {
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 	bold,
+	channelMention,
 	roleMention,
 	underscore,
 	userMention
@@ -85,12 +86,6 @@ export const data = new SlashCommandBuilder()
 						return option
 							.setName('channel')
 							.setDescription('Channel to lock')
-							.setRequired(false);
-					})
-					.addBooleanOption(option => {
-						return option
-							.setName('unlock')
-							.setDescription('Unlock the channel instead')
 							.setRequired(false);
 					});
 			});
@@ -223,11 +218,10 @@ const handlers = {
 				return;
 			}
 			const channel = interaction.options.getChannel('channel')
-					? await interaction.guild.channels.fetch(
-							interaction.options.getChannel('channel')!.id
-						)
-					: interaction.channel,
-				unlock = interaction.options.getBoolean('unlock', false);
+				? await interaction.guild.channels.fetch(
+						interaction.options.getChannel('channel')!.id
+					)
+				: interaction.channel;
 			if (
 				!channel ||
 				channel.isDMBased() ||
@@ -235,36 +229,11 @@ const handlers = {
 				!channel.isTextBased()
 			) {
 				await interaction.editReply(
-					'Error: cannot lock/unlock this channel.\nCause may be insufficient permissions or invalid channel type.'
+					'Error: cannot lock this channel.\nCause may be insufficient permissions or invalid channel type.'
 				);
 				return;
 			}
-			if (!unlock) {
-				if (channel.isThread())
-					await channel.setLocked(true, 'Channel locked by DisCog');
-				else
-					await channel.permissionOverwrites.edit(
-						interaction.guild.roles.everyone,
-						{
-							AddReactions: false,
-							AttachFiles: false,
-							CreateInstantInvite: false,
-							CreatePrivateThreads: false,
-							CreatePublicThreads: false,
-							EmbedLinks: false,
-							ManageMessages: false,
-							ManageThreads: false,
-							ReadMessageHistory: true,
-							SendMessages: false,
-							SendMessagesInThreads: false,
-							SendTTSMessages: false,
-							SendVoiceMessages: false,
-							Speak: false,
-							UseApplicationCommands: false,
-							ViewChannel: true
-						}
-					);
-			} else if (channel.isThread())
+			if (channel.isThread())
 				await channel.setLocked(false, 'Channel locked by DisCog');
 			else
 				await channel.permissionOverwrites.edit(
@@ -289,11 +258,7 @@ const handlers = {
 					}
 				);
 			await interaction.editReply(
-				`Channel ${channel} has been ${unlock ? 'unlocked' : 'locked'}!${
-					unlock
-						? '\nAll permissions have been reset to predefined defaults.'
-						: ''
-				}`
+				`Channel ${channelMention(channel.id)} has been locked!`
 			);
 		}
 	}

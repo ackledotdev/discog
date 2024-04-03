@@ -68,15 +68,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 					)}.\n\nAll features are free to use, but if you would like to support the development of this bot, you can donate ${hyperlink(
 						'here',
 						'https://discog.localplayer.dev/donate'
-					)}.\n\nMeanwhile, here are some commands you can try out:\n- ${inlineCode(
-						'/anime image'
-					)}\n- ${inlineCode('/announce')}\n- ${inlineCode(
-						'/github profile'
-					)}\n- ${inlineCode('/identity bio set')}\n- ${inlineCode(
-						'/info guild'
-					)}\n- ${inlineCode('/ping')}\n- ${inlineCode(
-						'/poll'
-					)}\n- ${inlineCode('/schedule')}\n- ${inlineCode('/unix')}`
+					)}.`
 				)
 		]
 	});

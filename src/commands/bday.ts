@@ -8,6 +8,7 @@ import {
 import { CommandHelpEntry } from '../struct/CommandHelpEntry';
 import { openKv } from '@deno/kv';
 import { DENO_KV_URL, DatabaseKeys } from '../config';
+import { BirthdayData } from '../struct/database';
 
 export const data = new SlashCommandBuilder()
 	.setName('bday')
@@ -32,14 +33,6 @@ export const data = new SlashCommandBuilder()
 					.setMaxValue(31)
 					.setRequired(true);
 			})
-			.addIntegerOption(option => {
-				return option
-					.setName('year')
-					.setDescription('Year of birth')
-					.setMinValue(1)
-					.setMaxValue(new Date().getFullYear())
-					.setRequired(true);
-			})
 	)
 	.addSubcommand(
 		new SlashCommandSubcommandBuilder()
@@ -56,10 +49,7 @@ export const data = new SlashCommandBuilder()
 export const help = new CommandHelpEntry(
 	'bday',
 	"Register your birthday or view another's",
-	[
-		'register <month: number> <day: number> <year: number>',
-		'view [user: user || @self]'
-	]
+	['register <month: number> <day: number>', 'view [user: user || @self]']
 );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
@@ -69,18 +59,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			await interaction.deferReply({
 				ephemeral: true
 			});
-			const bday = new Date();
-			bday.setFullYear(
-				interaction.options.getInteger('year', true),
-				interaction.options.getInteger('month', true) - 1,
-				interaction.options.getInteger('date', true)
-			);
-			await db.set(
-				[DatabaseKeys.Bday, interaction.user.id],
-				bday.toLocaleDateString()
-			);
+			const bday: BirthdayData = {
+				month: interaction.options.getInteger('month', true),
+				date: interaction.options.getInteger('date', true)
+			};
+			await db.set([DatabaseKeys.Bday, interaction.user.id], bday);
 			await interaction.editReply({
-				content: `Your birthday is set to ${bday.toLocaleDateString()}`
+				content: `Your birthday is set to ${bday.month}/${bday.date}.`
 			});
 			break;
 		}
@@ -89,14 +74,17 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				await interaction.deferReply();
 				const id =
 					interaction.options.getUser('user')?.id ?? interaction.user.id;
-				const ubday = (await db.get([DatabaseKeys.Bday, id])).value;
+				const ubday = (await db.get([DatabaseKeys.Bday, id])).value as
+					| BirthdayData
+					| undefined
+					| null;
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
 							.setTitle('User Birthday')
 							.setDescription(
 								ubday
-									? `${userMention(id)}'s birthday is on ${ubday}.`
+									? `${userMention(id)}'s birthday is on ${ubday.month}/${ubday.date}.`
 									: `${userMention(id)} has not registered their birthday.`
 							)
 							.setFooter({

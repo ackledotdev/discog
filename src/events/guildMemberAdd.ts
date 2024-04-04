@@ -1,9 +1,8 @@
 import {
+	BaseGuildTextChannel,
 	EmbedBuilder,
 	Events,
 	GuildMember,
-	NewsChannel,
-	TextChannel,
 	userMention
 } from 'discord.js';
 import { getGuildGreetingData } from './a.getGuildConf';
@@ -14,10 +13,9 @@ export const execute = async (member: GuildMember) => {
 	const config = await getGuildGreetingData(member.guild);
 	if (!config?.welcomeEnabled) return;
 	await (
-		(await member.guild.channels.fetch(config.channel)) as
-			| NewsChannel
-			| TextChannel
-			| undefined
+		(await member.guild.channels.fetch(
+			config.channel
+		)) as BaseGuildTextChannel | null
 	)?.send({
 		embeds: [
 			new EmbedBuilder()

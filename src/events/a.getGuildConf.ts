@@ -14,13 +14,7 @@ export async function getGuildAuditLoggingChannel(guild: Guild) {
 }
 
 export async function getGuildGreetingData(guild: Guild) {
-	const config = await getGuildConfig(guild);
-	if (
-		config.greetings?.channel ||
-		(!config.greetings?.goodbyeEnabled && !config.greetings?.welcomeEnabled)
-	)
-		return;
-	return config.greetings;
+	return (await getGuildConfig(guild)).greetings;
 }
 
 async function getGuildConfig(guild: Guild) {

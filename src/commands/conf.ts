@@ -109,340 +109,325 @@ export const help = new CommandHelpEntry(
 	]
 );
 
-const db = await openKv(DENO_KV_URL),
-	handlers = {
-		auditlog: async (
-			interaction: ChatInputCommandInteraction,
-			setDefaults: boolean,
-			config: PopulatedGuildConfig
-		): Promise<PopulatedGuildConfig> => {
-			const channel = interaction.options.getChannel('channel', false),
-				enabled = interaction.options.getBoolean('enabled', true);
-			if (enabled && channel)
-				if (
-					channel! instanceof NewsChannel &&
-					channel! instanceof TextChannel
-				) {
-					await interaction.editReply(
-						'You must provide a generic text channel to enable audit logs.'
-					);
-					return config;
-				} else
-					config.auditlog = {
-						channel: channel.id,
-						enabled
-					};
-			else if (enabled && !channel) {
+const db = await openKv(DENO_KV_URL);
+const handlers = {
+	auditlog: async (
+		interaction: ChatInputCommandInteraction,
+		setDefaults: boolean,
+		config: PopulatedGuildConfig
+	): Promise<PopulatedGuildConfig> => {
+		const channel = interaction.options.getChannel('channel', false),
+			enabled = interaction.options.getBoolean('enabled', true);
+		if (enabled && channel)
+			if (channel! instanceof NewsChannel && channel! instanceof TextChannel) {
 				await interaction.editReply(
-					'You must provide a channel to enable audit logs'
+					'You must provide a generic text channel to enable audit logs.'
 				);
 				return config;
-			} else if (!enabled)
+			} else
 				config.auditlog = {
-					channel: null,
+					channel: channel.id,
 					enabled
 				};
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle('Audit Log Configuration')
-						.setDescription(
-							`This is the server audit log configuration. DisCog will send messages to the selected channel everytime a noteworthy event is detected as long as the option is enabled.${
-								setDefaults
-									? bold(
-											`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
-												'/conf view'
-											)}`
-										)
-									: ''
-							}`
-						)
-						.setFields(
-							{
-								name: 'Enabled',
-								value: config.auditlog.enabled.toString()
-							},
-							{
-								name: 'Channel',
-								value: config.auditlog.channel
-									? channelMention(config.auditlog.channel)
-									: 'None'
-							}
-						)
-				]
-			});
+		else if (enabled && !channel) {
+			await interaction.editReply(
+				'You must provide a channel to enable audit logs'
+			);
 			return config;
-		},
-		birthdays: async (
-			interaction: ChatInputCommandInteraction,
-			setDefaults: boolean,
-			config: PopulatedGuildConfig
-		): Promise<PopulatedGuildConfig> => {
-			const channel = interaction.options.getChannel('channel', false),
-				enabled = interaction.options.getBoolean('enabled', true);
-			if (enabled && channel)
-				if (
-					channel! instanceof NewsChannel &&
-					channel! instanceof TextChannel
-				) {
-					await interaction.editReply(
-						'You must provide a generic text channel to enable birthday announcements.'
-					);
-					return config;
-				} else
-					config.birthdays = {
-						channel: channel.id,
-						enabled
-					};
-			else if (enabled && !channel) {
+		} else if (!enabled)
+			config.auditlog = {
+				channel: null,
+				enabled
+			};
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle('Audit Log Configuration')
+					.setDescription(
+						`This is the server audit log configuration. DisCog will send messages to the selected channel everytime a noteworthy event is detected as long as the option is enabled.${
+							setDefaults
+								? bold(
+										`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
+											'/conf view'
+										)}`
+									)
+								: ''
+						}`
+					)
+					.setFields(
+						{
+							name: 'Enabled',
+							value: config.auditlog.enabled.toString()
+						},
+						{
+							name: 'Channel',
+							value: config.auditlog.channel
+								? channelMention(config.auditlog.channel)
+								: 'None'
+						}
+					)
+			]
+		});
+		return config;
+	},
+	birthdays: async (
+		interaction: ChatInputCommandInteraction,
+		setDefaults: boolean,
+		config: PopulatedGuildConfig
+	): Promise<PopulatedGuildConfig> => {
+		const channel = interaction.options.getChannel('channel', false),
+			enabled = interaction.options.getBoolean('enabled', true);
+		if (enabled && channel)
+			if (channel! instanceof NewsChannel && channel! instanceof TextChannel) {
 				await interaction.editReply(
-					'You must provide a channel to enable birthday announcements.'
+					'You must provide a generic text channel to enable birthday announcements.'
 				);
 				return config;
-			} else if (!enabled)
+			} else
 				config.birthdays = {
-					channel: null,
+					channel: channel.id,
 					enabled
 				};
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle('Birthday Announcement Configuration')
-						.setDescription(
-							`This is the server's birthday announcement configuration. DisCog will announce birthdays in the selected channel as long as the option is enabled.${
-								setDefaults
-									? bold(
-											`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
-												'/conf view'
-											)}`
-										)
-									: ''
-							}`
-						)
-						.setFields(
-							{
-								name: 'Enabled',
-								value: config.birthdays.enabled.toString()
-							},
-							{
-								name: 'Channel',
-								value: config.birthdays.channel
-									? channelMention(config.birthdays.channel)
-									: 'None'
-							}
-						)
-				]
-			});
+		else if (enabled && !channel) {
+			await interaction.editReply(
+				'You must provide a channel to enable birthday announcements.'
+			);
 			return config;
-		},
-		greetings: async (
-			interaction: ChatInputCommandInteraction,
-			setDefaults: boolean,
-			config: PopulatedGuildConfig
-		): Promise<PopulatedGuildConfig> => {
-			const channel =
-					interaction.options.getChannel('channel', false) ??
-					(config.greetings.channel
-						? await interaction.guild!.channels.fetch(config.greetings.channel)
-						: null),
-				goodbye = interaction.options.getBoolean('goodbye', true),
-				welcome = interaction.options.getBoolean('welcome', true);
-			if (goodbye && channel)
-				if (
-					channel! instanceof NewsChannel &&
-					channel! instanceof TextChannel
-				) {
-					await interaction.editReply(
-						'You must provide a generic text channel to enable audit logs.'
-					);
-					return config;
-				} else
-					config.greetings = {
-						channel: channel.id,
-						goodbyeEnabled: goodbye,
-						welcomeEnabled: welcome
-					};
-			else if (welcome && channel)
-				if (
-					channel! instanceof NewsChannel &&
-					channel! instanceof TextChannel
-				) {
-					await interaction.editReply(
-						'You must provide a generic text channel to enable audit logs.'
-					);
-					return config;
-				} else
-					config.greetings = {
-						channel: channel.id,
-						goodbyeEnabled: goodbye,
-						welcomeEnabled: welcome
-					};
-			else if ((welcome || goodbye) && !channel)
+		} else if (!enabled)
+			config.birthdays = {
+				channel: null,
+				enabled
+			};
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle('Birthday Announcement Configuration')
+					.setDescription(
+						`This is the server's birthday announcement configuration. DisCog will announce birthdays in the selected channel as long as the option is enabled.${
+							setDefaults
+								? bold(
+										`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
+											'/conf view'
+										)}`
+									)
+								: ''
+						}`
+					)
+					.setFields(
+						{
+							name: 'Enabled',
+							value: config.birthdays.enabled.toString()
+						},
+						{
+							name: 'Channel',
+							value: config.birthdays.channel
+								? channelMention(config.birthdays.channel)
+								: 'None'
+						}
+					)
+			]
+		});
+		return config;
+	},
+	greetings: async (
+		interaction: ChatInputCommandInteraction,
+		setDefaults: boolean,
+		config: PopulatedGuildConfig
+	): Promise<PopulatedGuildConfig> => {
+		const channel =
+				interaction.options.getChannel('channel', false) ??
+				(config.greetings.channel
+					? await interaction.guild!.channels.fetch(config.greetings.channel)
+					: null),
+			goodbye = interaction.options.getBoolean('goodbye', true),
+			welcome = interaction.options.getBoolean('welcome', true);
+		if (goodbye && channel)
+			if (channel! instanceof NewsChannel && channel! instanceof TextChannel) {
 				await interaction.editReply(
-					'You must provide a channel to enable greeting messages'
+					'You must provide a generic text channel to enable audit logs.'
 				);
-			else if (!welcome && !goodbye)
+				return config;
+			} else
 				config.greetings = {
-					channel: null,
+					channel: channel.id,
 					goodbyeEnabled: goodbye,
 					welcomeEnabled: welcome
 				};
-			else {
+		else if (welcome && channel)
+			if (channel! instanceof NewsChannel && channel! instanceof TextChannel) {
 				await interaction.editReply(
-					'An error occured while configuring the greeting messages. Please contact the developer for assistance.'
+					'You must provide a generic text channel to enable audit logs.'
 				);
 				return config;
-			}
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle('Goodbye Message Configuration')
-						.setDescription(
-							`This is the server's goodbye message configuration. DisCog will send goodbye messages to the selected channel as long as the option is enabled.${
-								setDefaults
-									? bold(
-											`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
-												'/conf view'
-											)}`
-										)
-									: ''
-							}`
-						)
-						.setFields(
-							{
-								name: 'Welcome Enabled',
-								value: config.greetings.welcomeEnabled.toString()
-							},
-							{
-								name: 'Goodbye Enabled',
-								value: config.greetings.goodbyeEnabled.toString()
-							},
-							{
-								name: 'Channel',
-								value: config.greetings.channel
-									? channelMention(config.greetings.channel)
-									: 'None'
-							}
-						)
-				]
-			});
+			} else
+				config.greetings = {
+					channel: channel.id,
+					goodbyeEnabled: goodbye,
+					welcomeEnabled: welcome
+				};
+		else if ((welcome || goodbye) && !channel)
+			await interaction.editReply(
+				'You must provide a channel to enable greeting messages'
+			);
+		else if (!welcome && !goodbye)
+			config.greetings = {
+				channel: null,
+				goodbyeEnabled: goodbye,
+				welcomeEnabled: welcome
+			};
+		else {
+			await interaction.editReply(
+				'An error occured while configuring the greeting messages. Please contact the developer for assistance.'
+			);
 			return config;
-		},
-		systemchannel: async (
-			interaction: ChatInputCommandInteraction,
-			setDefaults: boolean,
-			config: PopulatedGuildConfig
-		): Promise<PopulatedGuildConfig> => {
-			const channel = interaction.options.getChannel('channel', false);
-			if (channel) {
-				if (
-					channel! instanceof NewsChannel &&
-					channel! instanceof TextChannel
-				) {
-					await interaction.editReply(
-						'You must provide a generic text channel to enable audit logs.'
-					);
-					return config;
-				} else config.systemchannel = channel.id;
-			} else config.systemchannel = null;
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle('System Messages Configuration')
-						.setDescription(
-							`This is the server's system messages configuration. DisCog will send system messages to the selected channel.${
-								setDefaults
-									? bold(
-											`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
-												'/conf'
-											)}`
-										)
-									: ''
-							}`
-						)
-						.setFields({
+		}
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle('Goodbye Message Configuration')
+					.setDescription(
+						`This is the server's goodbye message configuration. DisCog will send goodbye messages to the selected channel as long as the option is enabled.${
+							setDefaults
+								? bold(
+										`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
+											'/conf view'
+										)}`
+									)
+								: ''
+						}`
+					)
+					.setFields(
+						{
+							name: 'Welcome Enabled',
+							value: config.greetings.welcomeEnabled.toString()
+						},
+						{
+							name: 'Goodbye Enabled',
+							value: config.greetings.goodbyeEnabled.toString()
+						},
+						{
 							name: 'Channel',
+							value: config.greetings.channel
+								? channelMention(config.greetings.channel)
+								: 'None'
+						}
+					)
+			]
+		});
+		return config;
+	},
+	systemchannel: async (
+		interaction: ChatInputCommandInteraction,
+		setDefaults: boolean,
+		config: PopulatedGuildConfig
+	): Promise<PopulatedGuildConfig> => {
+		const channel = interaction.options.getChannel('channel', false);
+		if (channel) {
+			if (channel! instanceof NewsChannel && channel! instanceof TextChannel) {
+				await interaction.editReply(
+					'You must provide a generic text channel to enable audit logs.'
+				);
+				return config;
+			} else config.systemchannel = channel.id;
+		} else config.systemchannel = null;
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle('System Messages Configuration')
+					.setDescription(
+						`This is the server's system messages configuration. DisCog will send system messages to the selected channel.${
+							setDefaults
+								? bold(
+										`\n\nSince this server had no prior data, the defaults have been calculated and set. You can view the current settings at any time by running ${inlineCode(
+											'/conf'
+										)}`
+									)
+								: ''
+						}`
+					)
+					.setFields({
+						name: 'Channel',
+						value: config.systemchannel
+							? channelMention(config.systemchannel)
+							: 'None'
+					})
+			]
+		});
+		return config;
+	},
+	view: async (
+		interaction: ChatInputCommandInteraction,
+		setDefaults: boolean,
+		config: PopulatedGuildConfig
+	): Promise<PopulatedGuildConfig> => {
+		await interaction.editReply({
+			embeds: [
+				new EmbedBuilder()
+					.setTitle('Configuration Information')
+					.setDescription(
+						`Configure DisCog for your server\n${inlineCode(
+							'/conf view'
+						)}\n${inlineCode(
+							'/conf auditlog <enabled: boolean> [channel: channel]'
+						)}\n${inlineCode(
+							'/conf birthdays <enabled: boolean> [channel: channel]'
+						)}\n${inlineCode(
+							'/conf greetings <welcome: boolean> <goodbye: boolean> [channel: channel]'
+						)}${
+							setDefaults
+								? `\n\n${bold(
+										'Since this server had no prior data, the defaults have been calculated and set.'
+									)}`
+								: ''
+						}\n\n${underscore(bold('Current Configuration:'))}`
+					)
+					.setFields(
+						{
+							name: 'Audit Log — Enabled',
+							value: config.auditlog.enabled.toString()
+						},
+						{
+							name: 'Audit Log — Channel',
+							value: config.auditlog.channel
+								? channelMention(config.auditlog.channel)
+								: 'None'
+						},
+						{
+							name: 'Birthday Announcements — Enabled',
+							value: config.birthdays.enabled.toString()
+						},
+						{
+							name: 'Birthday Announcements — Channel',
+							value: config.birthdays.channel
+								? channelMention(config.birthdays.channel)
+								: 'None'
+						},
+						{
+							name: 'Welcome Messages — Enabled',
+							value: config.greetings.welcomeEnabled.toString()
+						},
+						{
+							name: 'Goodbye Messages — Enabled',
+							value: config.greetings.goodbyeEnabled.toString()
+						},
+						{
+							name: 'Welcome/Goodbye Messages — Channel',
+							value: config.greetings.channel
+								? channelMention(config.greetings.channel)
+								: 'None'
+						},
+						{
+							name: 'System Messages — Channel',
 							value: config.systemchannel
 								? channelMention(config.systemchannel)
 								: 'None'
-						})
-				]
-			});
-			return config;
-		},
-		view: async (
-			interaction: ChatInputCommandInteraction,
-			setDefaults: boolean,
-			config: PopulatedGuildConfig
-		): Promise<PopulatedGuildConfig> => {
-			await interaction.editReply({
-				embeds: [
-					new EmbedBuilder()
-						.setTitle('Configuration Information')
-						.setDescription(
-							`Configure DisCog for your server\n${inlineCode(
-								'/conf view'
-							)}\n${inlineCode(
-								'/conf auditlog <enabled: boolean> [channel: channel]'
-							)}\n${inlineCode(
-								'/conf birthdays <enabled: boolean> [channel: channel]'
-							)}\n${inlineCode(
-								'/conf greetings <welcome: boolean> <goodbye: boolean> [channel: channel]'
-							)}${
-								setDefaults
-									? `\n\n${bold(
-											'Since this server had no prior data, the defaults have been calculated and set.'
-										)}`
-									: ''
-							}\n\n${underscore(bold('Current Configuration:'))}`
-						)
-						.setFields(
-							{
-								name: 'Audit Log — Enabled',
-								value: config.auditlog.enabled.toString()
-							},
-							{
-								name: 'Audit Log — Channel',
-								value: config.auditlog.channel
-									? channelMention(config.auditlog.channel)
-									: 'None'
-							},
-							{
-								name: 'Birthday Announcements — Enabled',
-								value: config.birthdays.enabled.toString()
-							},
-							{
-								name: 'Birthday Announcements — Channel',
-								value: config.birthdays.channel
-									? channelMention(config.birthdays.channel)
-									: 'None'
-							},
-							{
-								name: 'Welcome Messages — Enabled',
-								value: config.greetings.welcomeEnabled.toString()
-							},
-							{
-								name: 'Goodbye Messages — Enabled',
-								value: config.greetings.goodbyeEnabled.toString()
-							},
-							{
-								name: 'Welcome/Goodbye Messages — Channel',
-								value: config.greetings.channel
-									? channelMention(config.greetings.channel)
-									: 'None'
-							},
-							{
-								name: 'System Messages — Channel',
-								value: config.systemchannel
-									? channelMention(config.systemchannel)
-									: 'None'
-							}
-						)
-				]
-			});
-			return config;
-		}
-	};
+						}
+					)
+			]
+		});
+		return config;
+	}
+};
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.deferReply();
 	const currentConfig =
@@ -507,15 +492,18 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			else newConfig.birthdays = { enabled: false };
 		}
 		if (!newConfig.greetings) {
-			if (guild.systemChannel) {
-				newConfig.greetings!.welcomeEnabled = true;
-				newConfig.greetings!.goodbyeEnabled = true;
-				newConfig.greetings!.channel = guild.systemChannel.id;
-			} else {
-				newConfig.greetings!.welcomeEnabled = false;
-				newConfig.greetings!.goodbyeEnabled = false;
-				newConfig.greetings!.channel = null;
-			}
+			if (guild.systemChannel)
+				newConfig.greetings = {
+					channel: guild.systemChannel.id,
+					goodbyeEnabled: true,
+					welcomeEnabled: true
+				};
+			else
+				newConfig.greetings = {
+					channel: null,
+					goodbyeEnabled: false,
+					welcomeEnabled: false
+				};
 		}
 		if (!newConfig.systemchannel)
 			newConfig.systemchannel = guild.systemChannel?.id ?? null;

@@ -1,15 +1,12 @@
 import express, { Request, Response } from 'express';
-import cors from 'cors';
+import helmet from 'helmet';
 
 export enum Methods {
 	DELETE = 'delete',
 	GET = 'get',
-	/** @public */
 	HEAD = 'head',
 	PATCH = 'patch',
-	/** @public */
 	POST = 'post',
-	/** @public */
 	PUT = 'put'
 }
 
@@ -26,14 +23,10 @@ export function createServer(...routes: Route[]) {
 	}
 	// cors
 	app.use(
-		cors({
-			origin: 'https://discog.opensourceforce.net/',
-			methods: [Methods.DELETE, Methods.GET, Methods.PATCH].map(e =>
-				e.toUpperCase()
-			),
-			maxAge: 86400,
-			allowedHeaders: ['Content-Type', 'Authorization'],
-			credentials: true
+		helmet({
+			crossOriginResourcePolicy: {
+				policy: 'same-site'
+			}
 		})
 	);
 	return app;

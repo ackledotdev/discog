@@ -27,7 +27,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger';
 import { readdirSync } from 'fs';
-import { scheduleJob } from 'node-schedule';
+import { RecurrenceSpecObjLit, scheduleJob } from 'node-schedule';
 import { openKv } from '@deno/kv';
 import { Jsoning } from 'jsoning';
 import { BirthdayData } from './struct/database';
@@ -81,9 +81,14 @@ const server = createServer(
 		route: '/invite'
 	},
 	{
-		handler: (_req, res) => res.sendStatus(client.isReady() ? 200 : 503),
+		handler: (_req, res) => res.redirect('/status'),
 		method: Methods.GET,
 		route: '/'
+	},
+	{
+		handler: (_req, res) => res.sendStatus(client.isReady() ? 200 : 503),
+		method: Methods.GET,
+		route: '/status'
 	},
 	{
 		handler: (req, res) => {
@@ -94,10 +99,6 @@ const server = createServer(
 				res.status(415).end();
 			else if (client.isReady())
 				res
-					.header({
-						'Access-Control-Allow-Origin': 'https://discog.opensourceforce.net',
-						Vary: 'Origin'
-					})
 					.status(200)
 					.contentType('application/json')
 					.send({
@@ -113,7 +114,7 @@ const server = createServer(
 			else res.status(503).end();
 		},
 		method: Methods.GET,
-		route: '/api/bot'
+		route: '/bot'
 	},
 	{
 		handler: (req, res) => {
@@ -124,10 +125,6 @@ const server = createServer(
 				res.status(415).end();
 			else if (client.isReady())
 				res
-					.header({
-						'Access-Control-Allow-Origin': 'https://discog.opensourceforce.net',
-						Vary: 'Origin'
-					})
 					.status(200)
 					.contentType('application/json')
 					.send({
@@ -141,7 +138,7 @@ const server = createServer(
 			else res.status(503).end();
 		},
 		method: Methods.GET,
-		route: '/api/commands'
+		route: '/commands'
 	}
 );
 logger.debug('Created server instance.');
@@ -307,8 +304,15 @@ process.on('SIGINT', () => {
 	process.exit(0);
 });
 
-// Schedule the bdayInterval function to run every day at 12:00 AM PST for a server running 7 hours ahead of PST
-scheduleJob('0 7 * * *', () => bdayInterval().catch(e => logger.error(e)));
+// Schedule the bdayInterval function to run every day at 12:00 AM PST
+scheduleJob(
+	{
+		tz: 'America/Los_Angeles',
+		hour: 0,
+		minute: 0
+	} satisfies RecurrenceSpecObjLit,
+	() => bdayInterval().catch(e => logger.error(e))
+);
 logger.debug('Scheduled birthday interval.');
 
 server.listen(process.env.PORT ?? PORT);

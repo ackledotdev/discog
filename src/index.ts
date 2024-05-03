@@ -74,35 +74,28 @@ const server = createServer(
 			res.redirect(
 				client.generateInvite({
 					permissions: permissionsBits,
-					scopes: [
-						OAuth2Scopes.ApplicationsCommands,
-						OAuth2Scopes.ApplicationsCommandsUpdate,
-						OAuth2Scopes.ApplicationCommandsPermissionsUpdate,
-						OAuth2Scopes.Bot,
-						OAuth2Scopes.Guilds,
-						OAuth2Scopes.Identify
-					]
+					scopes: [OAuth2Scopes.Bot, OAuth2Scopes.Guilds, OAuth2Scopes.Identify]
 				})
 			),
 		method: Methods.GET,
 		route: '/invite'
 	},
 	{
-		handler: (_req, res) => res.sendStatus(200),
+		handler: (_req, res) => res.sendStatus(client.isReady() ? 200 : 503),
 		method: Methods.GET,
 		route: '/'
 	},
 	{
 		handler: (req, res) => {
 			if (
-				req.headers['content-type'] != 'application/json' &&
+				req.headers['content-type'] !== 'application/json' &&
 				req.headers['content-type'] != undefined
 			)
 				res.status(415).end();
 			else if (client.isReady())
 				res
 					.header({
-						'Access-Control-Allow-Origin': 'https://discog.localplayer.dev',
+						'Access-Control-Allow-Origin': 'https://discog.opensourceforce.net',
 						Vary: 'Origin'
 					})
 					.status(200)
@@ -121,6 +114,34 @@ const server = createServer(
 		},
 		method: Methods.GET,
 		route: '/api/bot'
+	},
+	{
+		handler: (req, res) => {
+			if (
+				req.headers['content-type'] !== 'application/json' &&
+				req.headers['content-type'] != undefined
+			)
+				res.status(415).end();
+			else if (client.isReady())
+				res
+					.header({
+						'Access-Control-Allow-Origin': 'https://discog.opensourceforce.net',
+						Vary: 'Origin'
+					})
+					.status(200)
+					.contentType('application/json')
+					.send({
+						commands: client.commands.map(command => ({
+							data: command.data.toJSON(),
+							help: command.help?.toJSON()
+						})),
+						timestamp: Date.now()
+					})
+					.end();
+			else res.status(503).end();
+		},
+		method: Methods.GET,
+		route: '/api/commands'
 	}
 );
 logger.debug('Created server instance.');

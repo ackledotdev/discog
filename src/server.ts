@@ -13,7 +13,6 @@ export enum Methods {
 	PUT = 'put'
 }
 
-/** @public */
 export interface Route {
 	handler: (req: Request, res: Response) => void;
 	method: Methods;
@@ -28,7 +27,7 @@ export function createServer(...routes: Route[]) {
 	// cors
 	app.use(
 		cors({
-			origin: 'https://discog.localplayer.dev',
+			origin: 'https://discog.opensourceforce.net/',
 			methods: [Methods.DELETE, Methods.GET, Methods.PATCH].map(e =>
 				e.toUpperCase()
 			),

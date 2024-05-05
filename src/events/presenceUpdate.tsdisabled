@@ -14,7 +14,7 @@ import { Writable } from '../struct/discord/types';
 export const name = Events.PresenceUpdate;
 export const once = false;
 export const execute = async (before: Presence, after: Presence) => {
-	/*let guild: Guild;
+	let guild: Guild;
 	if (before.guild) guild = before.guild;
 	else if (after.guild) guild = after.guild;
 	else return;
@@ -88,5 +88,5 @@ function getDifferentElements<T>(before: T[], after: T[]) {
 	return {
 		removed: beforeCopy,
 		added: afterCopy
-	};*/
+	};
 }

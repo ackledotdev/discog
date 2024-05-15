@@ -27,6 +27,10 @@ export const execute = async (message: Message) => {
 						value: channelMention(message.channel.id)
 					},
 					{
+						name: 'Message ID',
+						value: message.id
+					},
+					{
 						name: 'Content',
 						value: message.content
 					}

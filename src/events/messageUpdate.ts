@@ -14,7 +14,8 @@ export const execute = async (old: Message, updated: Message) => {
 		old.author.bot ||
 		!old.inGuild() ||
 		updated.author.bot ||
-		!updated.inGuild()
+		!updated.inGuild() ||
+		old.content === updated.content // Discord seems to send an update event for every embed update, so we need to filter out those
 	)
 		return;
 	await (

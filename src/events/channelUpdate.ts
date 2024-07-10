@@ -1,4 +1,4 @@
-import {
+/*import {
 	AuditLogEvent,
 	BaseGuildTextChannel,
 	BaseGuildVoiceChannel,
@@ -234,4 +234,4 @@ function getDifferentProperties(before: GuildChannel, after: GuildChannel) {
 		}
 		return diff;
 	}, {} as Partial<GuildChannel>);
-}
+}*/

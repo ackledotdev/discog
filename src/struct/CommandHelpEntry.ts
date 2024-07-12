@@ -92,7 +92,7 @@ export class CommandHelpEntry {
 	}
 }
 
-export interface SerializedCommandHelpEntry {
+interface SerializedCommandHelpEntry {
 	description: string;
 	name: string;
 	usage?: string[];

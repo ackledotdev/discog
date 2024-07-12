@@ -10,7 +10,7 @@ export enum Methods {
 	PUT = 'put'
 }
 
-export interface Route {
+interface Route {
 	handler: (req: Request, res: Response) => void;
 	method: Methods;
 	route: string;

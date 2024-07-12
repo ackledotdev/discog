@@ -13,7 +13,7 @@ import { Command } from './types';
 	}
 }
 
-export class ExtendedClient extends Client {
+export class CommandClient extends Client {
 	commands: ExtendedCollection<string, Command>;
 
 	constructor(options: ClientOptions) {
@@ -22,5 +22,3 @@ export class ExtendedClient extends Client {
 		this.commands = new ExtendedCollection<string, Command>();
 	}
 }
-
-export { ExtendedClient as CommandClient };

@@ -12,5 +12,3 @@ export interface Command {
 	help?: CommandHelpEntry;
 	execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
-
-export type Writable<T> = { -readonly [P in keyof T]: T[P] };

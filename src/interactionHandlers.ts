@@ -9,7 +9,6 @@ import {
 	ModalSubmitInteraction,
 	PermissionFlagsBits,
 	Snowflake,
-	StageChannel,
 	StringSelectMenuInteraction,
 	UserContextMenuCommandInteraction,
 	codeBlock,
@@ -22,7 +21,9 @@ import { logger } from './logger';
 import { openKv } from '@deno/kv';
 import { DENO_KV_URL, DatabaseKeys } from './config';
 
-const db = await openKv(DENO_KV_URL);
+const db = await openKv(DENO_KV_URL, {
+	accessToken: process.env.DENO_KV_ACCESS_TOKEN!
+});
 
 export const InteractionHandlers = {
 	async Button(interaction: ButtonInteraction): Promise<void> {

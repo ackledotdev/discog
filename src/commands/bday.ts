@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import {
 	ChatInputCommandInteraction,
 	EmbedBuilder,
@@ -54,7 +53,9 @@ export const help = new CommandHelpEntry(
 );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-	const db = await openKv(DENO_KV_URL);
+	const db = await openKv(DENO_KV_URL, {
+		accessToken: process.env.DENO_KV_ACCESS_TOKEN!
+	});
 	switch (interaction.options.getSubcommand()) {
 		case 'register': {
 			await interaction.deferReply({

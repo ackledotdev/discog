@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { BaseGuildConfig, PopulatedGuildConfig } from '../struct/database';
 import {
 	ChannelType,
@@ -110,7 +109,9 @@ export const help = new CommandHelpEntry(
 	]
 );
 
-const db = await openKv(DENO_KV_URL);
+const db = await openKv(DENO_KV_URL, {
+	accessToken: process.env.DENO_KV_ACCESS_TOKEN!
+});
 const handlers = {
 	auditlog: async (
 		interaction: ChatInputCommandInteraction,

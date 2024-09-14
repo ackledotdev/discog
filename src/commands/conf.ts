@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { BaseGuildConfig, PopulatedGuildConfig } from '../struct/database';
 import {
 	ChannelType,

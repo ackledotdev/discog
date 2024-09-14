@@ -1,4 +1,5 @@
 /* eslint-disable indent */
+import 'dotenv/config';
 import {
 	APIEmbedField,
 	ButtonInteraction,

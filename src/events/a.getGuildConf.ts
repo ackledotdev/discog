@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { openKv } from '@deno/kv';
 import { BaseGuildConfig } from '../struct/database';
 import { Guild } from 'discord.js';

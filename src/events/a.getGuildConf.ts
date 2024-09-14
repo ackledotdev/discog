@@ -3,8 +3,6 @@ import { BaseGuildConfig } from '../struct/database';
 import { Guild } from 'discord.js';
 import { DENO_KV_URL, DatabaseKeys } from '../config';
 
-const db = await openKv(DENO_KV_URL);
-
 export async function getGuildAuditLoggingChannel(guild: Guild) {
 	const config = await getGuildConfig(guild);
 	if (!config.auditlog?.enabled || !config?.auditlog?.channel) return;
@@ -18,6 +16,7 @@ export async function getGuildGreetingData(guild: Guild) {
 }
 
 async function getGuildConfig(guild: Guild) {
+	const db = await openKv(DENO_KV_URL);
 	return (
 		(await db.get<BaseGuildConfig>([DatabaseKeys.GuildConfig, guild.id]))
 			.value ?? {}

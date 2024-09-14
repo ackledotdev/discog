@@ -109,9 +109,7 @@ export const help = new CommandHelpEntry(
 	]
 );
 
-const db = await openKv(DENO_KV_URL, {
-	accessToken: process.env.DENO_KV_ACCESS_TOKEN!
-});
+const db = await openKv(DENO_KV_URL);
 const handlers = {
 	auditlog: async (
 		interaction: ChatInputCommandInteraction,

@@ -21,9 +21,7 @@ import { logger } from './logger';
 import { openKv } from '@deno/kv';
 import { DENO_KV_URL, DatabaseKeys } from './config';
 
-const db = await openKv(DENO_KV_URL, {
-	accessToken: process.env.DENO_KV_ACCESS_TOKEN!
-});
+const db = await openKv(DENO_KV_URL);
 
 export const InteractionHandlers = {
 	async Button(interaction: ButtonInteraction): Promise<void> {

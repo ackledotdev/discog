@@ -8,7 +8,6 @@
 		"skipLibCheck": true,
 		"target": "ESNext",
 		"lib": ["ESNext", "ES2022", "ES5", "ES6"],
-		"noEmit": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"alwaysStrict": true

@@ -1,10 +1,9 @@
 botfiles/*.db.json
 *TOKEN*
 node_modules
-package-lock.json
 ._*
 .DS_Store
 .Trashes
 *.env*
 *.env.*
-.space
+dist

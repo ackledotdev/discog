@@ -64,31 +64,6 @@ export const InteractionHandlers = {
 			interaction: MessageContextMenuCommandInteraction
 		): Promise<void> {
 			switch (interaction.commandName) {
-				case 'Message JSON': {
-					const json = await format(
-						JSON.stringify(interaction.targetMessage.toJSON()),
-						{
-							parser: 'json5',
-							tabWidth: 2,
-							useTabs: false
-						}
-					);
-					if (json.length > 1990) {
-						if (
-							!interaction.channel?.isTextBased() ||
-							interaction.channel instanceof StageChannel
-						)
-							return;
-						await interaction.reply(
-							'JSON is too long, sending in multiple messages...'
-						);
-						const jsons = json.match(/[\s\S]{1,1990}/g) || [];
-						for (const json of jsons) {
-							await interaction.channel.send(codeBlock(json));
-						}
-					} else await interaction.reply(codeBlock(json));
-					break;
-				}
 			}
 		},
 		async User(interaction: UserContextMenuCommandInteraction): Promise<void> {

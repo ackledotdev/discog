@@ -156,6 +156,7 @@ const Handlers: {
 					BaseEmbed(interaction)
 						.setDescription(null)
 						.setFields(
+							// @ts-expect-error octokit types are weird
 							...data.map(repo => ({
 								name: repo.name,
 								value:

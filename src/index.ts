@@ -289,7 +289,10 @@ client
 		}
 	})
 	.on(Events.Debug, m => logger.debug(m))
-	.on(Events.Error, m => logger.error(m))
+	.on(Events.Error, m => {
+		logger.error(m);
+		sendError(m);
+	})
 	.on(Events.Warn, m => logger.warn(m));
 logger.debug('Set up client events.');
 
@@ -298,6 +301,7 @@ await client
 	.then(() => logger.info('Logged in.'));
 
 process.on('SIGINT', () => {
+	sendError(new Error('SIGINT received.'));
 	client.destroy();
 	stdout.write('\n');
 	logger.info('Destroyed Client.');

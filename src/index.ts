@@ -179,18 +179,20 @@ client
 	.on(Events.ClientReady, () => logger.info('Client#ready'))
 	.on(Events.InteractionCreate, async interaction => {
 		if (interaction.user.bot) return;
-		const blacklisted = (await db.get<Snowflake[]>([DatabaseKeys.Blacklist]))
-			?.value;
-		if (
-			(blacklisted ?? []).includes(interaction.user.id) &&
-			interaction.isCommand()
-		) {
-			await interaction.reply({
-				content: 'You are blacklisted from using this bot.',
-				ephemeral: true
-			});
-			return;
-		}
+		try {
+			const blacklisted = (await db.get<Snowflake[]>([DatabaseKeys.Blacklist]))?.value;
+			if (
+				(blacklisted ?? []).includes(interaction.user.id) &&
+				interaction.isCommand()
+			) {
+				await interaction.reply({
+					content: 'You are blacklisted from using this bot.',
+					ephemeral: true
+				});
+				return;
+			}
+		} catch (e) { logger.error(e); }
+
 		if (interaction.isChatInputCommand()) {
 			const command = client.commands.get(interaction.commandName);
 			if (!command) {

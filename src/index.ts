@@ -39,7 +39,6 @@ if (argv.includes('-d')) {
 	logger.debug('Debug mode enabled.');
 }
 
-const db = await openKv(DENO_KV_URL);
 logger.debug('Loaded dev database.');
 
 const client = new CommandClient({
@@ -180,7 +179,11 @@ client
 	.on(Events.InteractionCreate, async interaction => {
 		if (interaction.user.bot) return;
 		try {
-			const blacklisted = (await db.get<Snowflake[]>([DatabaseKeys.Blacklist]))?.value;
+			const blacklisted = (
+				await (
+					await openKv(DENO_KV_URL)
+				).get<Snowflake[]>([DatabaseKeys.Blacklist])
+			)?.value;
 			if (
 				(blacklisted ?? []).includes(interaction.user.id) &&
 				interaction.isCommand()
@@ -191,7 +194,9 @@ client
 				});
 				return;
 			}
-		} catch (e) { logger.error(e); }
+		} catch (e) {
+			logger.error(e);
+		}
 
 		if (interaction.isChatInputCommand()) {
 			const command = client.commands.get(interaction.commandName);
@@ -333,7 +338,9 @@ logger.info('Process setup complete.');
 async function bdayInterval() {
 	const today = new Date();
 	const allBirthdays: { id: string; data: BirthdayData }[] = [];
-	for await (const val of db.list({ prefix: [DatabaseKeys.Bday] }))
+	for await (const val of (await openKv(DENO_KV_URL)).list({
+		prefix: [DatabaseKeys.Bday]
+	}))
 		allBirthdays.push({
 			id: val.key[1].toString(),
 			data: val.value as BirthdayData
@@ -383,8 +390,9 @@ async function bdayInterval() {
 }
 
 async function sendError(e: Error) {
-	for (const devId of (await db.get<Snowflake[]>([DatabaseKeys.Devs]))?.value ??
-		[]) {
+	for (const devId of (
+		await (await openKv(DENO_KV_URL)).get<Snowflake[]>([DatabaseKeys.Devs])
+	)?.value ?? []) {
 		client.users.fetch(devId).then(user => {
 			const date = new Date();
 			user.send({

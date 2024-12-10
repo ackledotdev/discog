@@ -2,6 +2,7 @@ import {
 	BaseGuildTextChannel,
 	ChannelType,
 	ChatInputCommandInteraction,
+	InteractionContextType,
 	PermissionFlagsBits,
 	SlashCommandBuilder
 } from 'discord.js';
@@ -10,7 +11,7 @@ import { CommandHelpEntry } from '../struct/CommandHelpEntry';
 export const data = new SlashCommandBuilder()
 	.setName('announce')
 	.setDescription('Creates an announcement in the specified channel')
-	.setDMPermission(false)
+	.setContexts(InteractionContextType.Guild)
 	.addChannelOption(option => {
 		return option
 			.setName('channel')

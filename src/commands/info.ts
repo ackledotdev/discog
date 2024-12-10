@@ -2,6 +2,7 @@ import {
 	ChannelType,
 	ChatInputCommandInteraction,
 	EmbedBuilder,
+	InteractionContextType,
 	SlashCommandBuilder,
 	channelMention,
 	inlineCode,
@@ -19,7 +20,7 @@ export const data = new SlashCommandBuilder()
 	.addSubcommand(subcommand => {
 		return subcommand.setName('channel').setDescription('Channel info');
 	})
-	.setDMPermission(false);
+	.setContexts(InteractionContextType.Guild);
 
 export const help = new CommandHelpEntry('info', 'Gets some info', [
 	'channel',

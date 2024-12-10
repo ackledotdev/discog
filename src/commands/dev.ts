@@ -10,8 +10,6 @@ import {
 } from 'discord.js';
 import Jsoning from 'jsoning';
 
-const db = new Jsoning('botfiles/dev.db.json');
-
 export const data = new SlashCommandBuilder()
 	.setName('dev')
 	.setDescription('Developer-only command')
@@ -87,6 +85,7 @@ export const data = new SlashCommandBuilder()
 	.setDMPermission(true);
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+	const db = new Jsoning('botfiles/dev.db.json');
 	const whitelist = ((await db.get('whitelist')) as string[]) || [];
 	const blacklist = ((await db.get('blacklist')) as string[]) || [];
 	if (!whitelist.includes(interaction.user.id)) {

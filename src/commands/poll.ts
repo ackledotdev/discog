@@ -2,6 +2,7 @@ import {
 	BaseGuildTextChannel,
 	ChatInputCommandInteraction,
 	EmbedBuilder,
+	InteractionContextType,
 	SlashCommandBuilder,
 	userMention
 } from 'discord.js';
@@ -10,7 +11,8 @@ import { CommandHelpEntry } from '../struct/CommandHelpEntry';
 export const data = new SlashCommandBuilder()
 	.setName('poll')
 	.setDescription('Create a poll')
-	.setDMPermission(false)
+	.setContexts(InteractionContextType.Guild)
+
 	// #region data
 	.addStringOption(option => {
 		return option

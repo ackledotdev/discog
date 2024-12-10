@@ -4,6 +4,7 @@ import {
 	ButtonStyle,
 	ChatInputCommandInteraction,
 	Guild,
+	InteractionContextType,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 	bold,
@@ -19,7 +20,7 @@ export const help = new CommandHelpEntry('admin', 'Admin commands');
 export const data = new SlashCommandBuilder()
 	.setName('admin')
 	.setDescription('Automatically run admin tasks')
-	.setDMPermission(false)
+	.setContexts(InteractionContextType.Guild)
 	.setDefaultMemberPermissions(
 		PermissionFlagsBits.ManageGuild |
 			PermissionFlagsBits.ManageRoles |

@@ -2,6 +2,7 @@ import {
 	ChatInputCommandInteraction,
 	EmbedBuilder,
 	GuildMember,
+	InteractionContextType,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 	userMention
@@ -23,7 +24,7 @@ export const data = new SlashCommandBuilder()
 			.setDescription('The message to send')
 			.setRequired(true);
 	})
-	.setDMPermission(false)
+	.setContexts(InteractionContextType.Guild)
 	.setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
 
 export const help = new CommandHelpEntry(

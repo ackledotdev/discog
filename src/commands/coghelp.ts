@@ -8,8 +8,6 @@ import { CommandHelpEntry } from '../struct/CommandHelpEntry';
 import { Jsoning } from 'jsoning';
 import { Collection } from '@discordjs/collection';
 
-const db = new Jsoning('botfiles/cmnds.db.json');
-
 export const help = new CommandHelpEntry(
 	'coghelp',
 	'Shows general help or help for a specific command',
@@ -24,7 +22,7 @@ export const data = new SlashCommandBuilder()
 			.setName('command')
 			.setDescription('The command to show help for')
 			.setChoices(
-				...Object.keys(db.all()).map(key => {
+				...Object.keys(new Jsoning('botfiles/cmnds.db.json').all()).map(key => {
 					return { name: key, value: key };
 				})
 			)
@@ -45,7 +43,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 		.setColor(0x00ff00);
 	const command = interaction.options.getString('command');
 	const fields = new Collection(
-		Object.values(db.all()).map(v => [v.name, CommandHelpEntry.fromJSON(v)])
+		Object.values(new Jsoning('botfiles/cmnds.db.json').all()).map(v => [
+			v.name,
+			CommandHelpEntry.fromJSON(v)
+		])
 	);
 	if (!command) embed.setFields(...fields.map(v => v.toDiscordAPIEmbedField()));
 	else if (fields.has(command))

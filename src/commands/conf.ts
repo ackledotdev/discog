@@ -3,6 +3,7 @@ import {
 	ChannelType,
 	ChatInputCommandInteraction,
 	EmbedBuilder,
+	InteractionContextType,
 	NewsChannel,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
@@ -19,7 +20,7 @@ import { DENO_KV_URL, DatabaseKeys } from '../config';
 export const data = new SlashCommandBuilder()
 	.setName('conf')
 	.setDescription('Configure DisCog for your server')
-	.setDMPermission(false)
+	.setContexts(InteractionContextType.Guild)
 	.setDefaultMemberPermissions(
 		PermissionFlagsBits.ManageGuild | PermissionFlagsBits.ViewAuditLog
 	)

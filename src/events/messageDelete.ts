@@ -20,11 +20,11 @@ export const execute = async (message: Message) => {
 				.setFields(
 					{
 						name: 'Author',
-						value: userMention(message.author.id)
+						value: userMention(message.author.id) ?? message.author.id
 					},
 					{
 						name: 'Channel',
-						value: channelMention(message.channel.id)
+						value: channelMention(message.channel.id) ?? message.channel.id
 					},
 					{
 						name: 'Message ID',

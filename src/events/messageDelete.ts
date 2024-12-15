@@ -10,13 +10,14 @@ export const name = Events.MessageDelete;
 export const once = false;
 
 export const execute = async (message: Message) => {
-	if (!message.inGuild()) return;
+	if (message.author.bot || !message.inGuild()) return;
 	await (
 		await getGuildAuditLoggingChannel(message.guild)
 	)?.send({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Message Deleted')
+				.setDescription(message.url)
 				.setFields(
 					{
 						name: 'Author',

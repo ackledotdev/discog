@@ -18,7 +18,7 @@ export const execute = async (message: Message) => {
 			new EmbedBuilder()
 				.setTitle('Message Deleted')
 				.setDescription(message.url)
-				.setFields(
+				.addFields(
 					{
 						name: 'Author',
 						value: userMention(message.author.id) ?? message.author.id

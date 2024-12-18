@@ -25,7 +25,7 @@ export const execute = async (old: Message, updated: Message) => {
 			new EmbedBuilder()
 				.setTitle('Message Updated')
 				.setDescription(updated.url)
-				.setFields(
+				.addFields(
 					{
 						name: 'Author',
 						value: userMention(updated.author.id)

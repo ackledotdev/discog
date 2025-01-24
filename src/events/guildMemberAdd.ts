@@ -23,7 +23,7 @@ export const execute = async (member: GuildMember) => {
 				.setDescription(
 					`${userMention(member.id)}\nNow at ${
 						(await member.guild.fetch()).memberCount
-					}members`
+					} members`
 				)
 				.setColor(0x00ff00)
 				.setTimestamp()

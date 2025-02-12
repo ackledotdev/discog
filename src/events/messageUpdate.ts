@@ -1,4 +1,5 @@
 import {
+	Client,
 	EmbedBuilder,
 	Events,
 	Message,
@@ -61,11 +62,11 @@ export const execute = async (old: Message, updated: Message) => {
 			]
 		});
 	} catch (e) {
-		await sendError(e);
+		await sendError(updated.client, e);
 	}
 };
 
-async function sendError(e: Error) {
+async function sendError(client: Client, e: Error) {
 	for (const devId of (
 		await (await openKv(DENO_KV_URL)).get<Snowflake[]>([DatabaseKeys.Devs])
 	)?.value ?? []) {

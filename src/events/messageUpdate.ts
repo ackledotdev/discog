@@ -4,6 +4,7 @@ import {
 	Events,
 	Message,
 	channelMention,
+	codeBlock,
 	userMention
 } from 'discord.js';
 import { getGuildAuditLoggingChannel } from './a.getGuildConf';

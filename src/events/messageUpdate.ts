@@ -15,8 +15,9 @@ import { DatabaseKeys, DENO_KV_URL } from '../config';
 import { openKv } from '@deno/kv';
 import { Snowflake, TimestampStyles } from 'discord.js';
 
-export const execute = async (old: Message, updated: Message) => {
+export const execute = async (old?: Message, updated: Message) => {
 	try {
+		if (!old) throw new Error('Gracefully caught ReferenceError: old is not defined');
 		if (
 			old.author.bot ||
 			!old.inGuild() ||

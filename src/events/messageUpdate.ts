@@ -82,7 +82,7 @@ async function sendError(client: Client, e: Error) {
 						.addFields({ name: 'Stack Trace', value: codeBlock(e.stack ?? '') })
 						.addFields({
 							name: 'Old Message',
-							value: codeBlock(JSON.stringify(old, undefined, 2))
+							value: codeBlock(old ? JSON.stringify(old, undefined, 2) : 'undefined')
 						})
 						.addFields({
 							name: 'New Message',

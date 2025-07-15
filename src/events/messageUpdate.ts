@@ -16,8 +16,13 @@ import { DatabaseKeys, DENO_KV_URL } from '../config';
 import { openKv } from '@deno/kv';
 import { Snowflake, TimestampStyles } from 'discord.js';
 
-export const execute = async (oldMessage: Message, newMessage: Message) => {
+export const execute = async (
+	oldMessage: Message | null | undefined,
+	newMessage: Message
+) => {
 	try {
+		if (!oldMessage || !newMessage) return;
+
 		if (
 			oldMessage.author.bot ||
 			!oldMessage.inGuild() ||

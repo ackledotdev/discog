@@ -17,7 +17,7 @@ export const execute = async (message: Message) => {
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Message Deleted')
-				.setDescription(message.url)
+				.setDescription(message.content)
 				.setFields(
 					{
 						name: 'Author',
@@ -30,10 +30,6 @@ export const execute = async (message: Message) => {
 					{
 						name: 'Message ID',
 						value: message.id
-					},
-					{
-						name: 'Content',
-						value: message.content
 					}
 				)
 				.setColor(0x0000ff)

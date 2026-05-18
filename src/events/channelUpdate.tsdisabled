@@ -18,27 +18,27 @@ import {
 	roleMention,
 	userMention
 } from 'discord.js';
-import { BaseGuildConfig } from '../struct/database';
-import { openKv } from '@deno/kv';
-import { DENO_KV_URL, DatabaseKeys } from '../config';
+import { getGuildAuditLogChannelId } from '../lib/redis';
 
 export const name = Events.ChannelUpdate;
 export const once = false;
-
-const db = await openKv(DENO_KV_URL);
 
 export const execute = async (
 	before: DMChannel | GuildChannel,
 	after: DMChannel | GuildChannel
 ) => {
-	if (before instanceof DMChannel || after instanceof DMChannel) return;
-	const config =
-		(await db.get<BaseGuildConfig>([DatabaseKeys.GuildConfig, after.guild.id]))
-			.value ?? {};
-	if (!config.auditlog?.enabled || !config.auditlog?.channel) return;
-	const auditlogChannel = after.guild.channels.cache.get(
-		config.auditlog.channel
-	);
+	if (
+		before instanceof DMChannel ||
+		!before.guild ||
+		after instanceof DMChannel ||
+		!after.guild
+	)
+		return;
+
+	const auditlogChannelId = await getGuildAuditLogChannelId(after.guild.id);
+	if (!auditlogChannelId) return;
+
+	const auditlogChannel = await after.guild.channels.fetch(auditlogChannelId);
 	if (!auditlogChannel || !auditlogChannel.isTextBased()) return;
 
 	const entry = (
@@ -129,21 +129,6 @@ export const execute = async (
 			const dp = differentProperties as Partial<
 				PrivateThreadChannel | PublicThreadChannel
 			>;
-			if (dp.archived)
-				embed.addFields({
-					name: 'Archived',
-					value: `\`${before.archived}\` => \`${after.archived}\``
-				});
-			if (dp.autoArchiveDuration)
-				embed.addFields({
-					name: 'Auto Archive Duration',
-					value: `\`${before.autoArchiveDuration}\` => \`${after.autoArchiveDuration}\``
-				});
-			if (dp.locked)
-				embed.addFields({
-					name: 'Locked',
-					value: `\`${before.locked}\` => \`${after.locked}\``
-				});
 		}
 	}
 	if (before instanceof ForumChannel && after instanceof ForumChannel) {
@@ -194,7 +179,7 @@ export const execute = async (
 			value: `Before:\n${codeBlock(
 				before.permissionOverwrites.cache
 					.map(
-						overwrite =>
+						(overwrite) =>
 							`Allowed: ${
 								overwrite.type === OverwriteType.Role
 									? roleMention(overwrite.id)
@@ -207,7 +192,7 @@ export const execute = async (
 			)}\n\nAfter:\n${codeBlock(
 				after.permissionOverwrites.cache
 					.map(
-						overwrite =>
+						(overwrite) =>
 							`${
 								overwrite.type === OverwriteType.Role
 									? roleMention(overwrite.id)

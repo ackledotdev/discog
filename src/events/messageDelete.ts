@@ -5,15 +5,21 @@ import {
 	channelMention,
 	userMention
 } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
+import { getGuildAuditLogChannelId } from '../lib/redis';
+
 export const name = Events.MessageDelete;
 export const once = false;
 
 export const execute = async (message: Message) => {
 	if (message.author.bot || !message.inGuild()) return;
-	await (
-		await getGuildAuditLoggingChannel(message.guild)
-	)?.send({
+
+	const channelId = await getGuildAuditLogChannelId(message.guild.id);
+	if (!channelId) return;
+
+	const channel = await message.guild.channels.fetch(channelId);
+	if (!channel || !channel.isTextBased()) return;
+
+	await channel.send({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Message Deleted')

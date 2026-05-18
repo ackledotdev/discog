@@ -8,21 +8,16 @@ import {
 	time,
 	userMention
 } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
+
 export const name = Events.MessageUpdate;
 export const once = false;
 
-import { DatabaseKeys, DENO_KV_URL } from '../config';
-import { openKv } from '@deno/kv';
-import { Snowflake, TimestampStyles } from 'discord.js';
+import { TimestampStyles } from 'discord.js';
+import { getDeveloperIds, getGuildAuditLogChannelId } from '../lib/redis';
 
-export const execute = async (
-	oldMessage: Message | null | undefined,
-	newMessage: Message
-) => {
+export const execute = async (oldMessage: Message, newMessage: Message) => {
 	try {
 		if (!oldMessage || !newMessage) return;
-
 		if (
 			oldMessage.author.bot ||
 			!oldMessage.inGuild() ||
@@ -31,9 +26,14 @@ export const execute = async (
 			oldMessage.content === newMessage.content // Discord seems to send an update event for every embed update, so we need to filter out those
 		)
 			return;
-		await (
-			await getGuildAuditLoggingChannel(newMessage.guild)
-		)?.send({
+
+		const channelId = await getGuildAuditLogChannelId(newMessage.guild.id);
+		if (!channelId) return;
+
+		const channel = await newMessage.guild.channels.fetch(channelId);
+		if (!channel || !channel.isTextBased()) return;
+
+		await channel.send({
 			embeds: [
 				new EmbedBuilder()
 					.setTitle('Message Updated')
@@ -69,50 +69,52 @@ export const execute = async (
 			]
 		});
 	} catch (e) {
-		await sendError(newMessage.client, e as Error);
-	}
-
-	async function sendError(client: Client, e: Error) {
-		for (const devId of (
-			await (await openKv(DENO_KV_URL)).get<Snowflake[]>([DatabaseKeys.Devs])
-		)?.value ?? []) {
-			client.users.fetch(devId).then(user => {
-				const date = new Date();
-				user.send({
-					embeds: [
-						new EmbedBuilder()
-							.setTitle('Error Log: Message Update Event')
-							.setDescription(e.message)
-							.addFields({
-								name: 'Stack Trace',
-								value: codeBlock(e.stack ?? '')
-							})
-							.addFields({
-								name: 'Old Message',
-								value: codeBlock(
-									oldMessage
-										? JSON.stringify(oldMessage, undefined, 2)
-										: 'undefined'
-								)
-							})
-							.addFields({
-								name: 'New Message',
-								value: codeBlock(JSON.stringify(newMessage, undefined, 2))
-							})
-							.addFields({
-								name: 'ISO 8601 Timestamp',
-								value: date.toISOString()
-							})
-							.addFields({
-								name: 'Localized DateTime',
-								value: time(date, TimestampStyles.LongDateTime)
-							})
-							.setColor(0xff00ff)
-							.setTimestamp()
-					]
-				});
-			});
-		}
-		console.error(e);
+		await sendError(newMessage.client, e, oldMessage, newMessage);
 	}
 };
+
+async function sendError(client: Client<true>, e: unknown, oldMessage: Message, newMessage: Message) {
+	for (const devId of await getDeveloperIds()) {
+		client.users.fetch(devId).then((user) => {
+			const date = new Date();
+			user.send({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle('Error Log: Message Update Event')
+						.setDescription(e instanceof Error ? e.message : String(e))
+						.addFields({
+							name: 'Stack Trace',
+							value: codeBlock(
+								e instanceof Error
+									? e.stack || 'No stack trace available'
+									: 'Not an error object'
+							)
+						})
+						.addFields({
+							name: 'Old Message',
+							value: codeBlock(
+								oldMessage
+									? JSON.stringify(oldMessage, undefined, 2)
+									: 'undefined'
+							)
+						})
+						.addFields({
+							name: 'New Message',
+							value: codeBlock(JSON.stringify(newMessage, undefined, 2))
+						})
+						.addFields({
+							name: 'ISO 8601 Timestamp',
+							value: date.toISOString()
+						})
+						.addFields({
+							name: 'Localized DateTime',
+							value: time(date, TimestampStyles.LongDateTime)
+						})
+						.setColor(0xff00ff)
+						.setTimestamp()
+				]
+			});
+		});
+	}
+	console.error(e);
+}

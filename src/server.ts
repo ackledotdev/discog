@@ -1,22 +1,22 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 
-export enum Methods {
-	DELETE = 'delete',
-	GET = 'get',
-	HEAD = 'head',
-	PATCH = 'patch',
-	POST = 'post',
-	PUT = 'put'
-}
+export const METHODS = {
+	DELETE: 'delete',
+	GET: 'get',
+	HEAD: 'head',
+	PATCH: 'patch',
+	POST: 'post',
+	PUT: 'put'
+} as const;
 
-interface Route {
-	handler: (req: Request, res: Response) => void;
-	method: Methods;
-	route: string;
-}
-
-export function createServer(...routes: Route[]) {
+export function createServer(
+	...routes: {
+		handler: express.RequestHandler;
+		method: (typeof METHODS)[keyof typeof METHODS];
+		route: string;
+	}[]
+) {
 	const app = express();
 	for (const { handler, method, route } of routes) {
 		app[method](route, handler);

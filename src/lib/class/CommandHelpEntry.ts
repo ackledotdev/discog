@@ -1,19 +1,13 @@
-import {
-	APIEmbedField,
-	RestOrArray,
-	inlineCode,
-	normalizeArray
-} from 'discord.js';
-
+import { APIEmbedField, inlineCode, normalizeArray } from 'discord.js';
+import { SerializedCommandHelpEntry } from '../discord/types';
 /**
  * Represents a command entry in the help command
  * @class
  */
 export class CommandHelpEntry {
-	description: string;
-	name: string;
-	_usage: string[] | undefined;
-
+	description;
+	name;
+	_usage;
 	/**
 	 * Creates a new command entry
 	 * @constructor
@@ -21,11 +15,7 @@ export class CommandHelpEntry {
 	 * @param {string} description the description of the command
 	 * @param {string[]} usage the usage of the command
 	 */
-	constructor(
-		name: string,
-		description: string,
-		...usage: RestOrArray<string>
-	) {
+	constructor(name: string, description: string, ...usage: string[]) {
 		/**
 		 * The name of the command
 		 * @type {string}
@@ -33,6 +23,7 @@ export class CommandHelpEntry {
 		 * @readonly
 		 */
 		this.name = name;
+
 		/**
 		 * The description of the command
 		 * @type {string}
@@ -40,6 +31,7 @@ export class CommandHelpEntry {
 		 * @readonly
 		 */
 		this.description = description;
+
 		/**
 		 * The usage of the command
 		 * @type {string[]}
@@ -54,9 +46,9 @@ export class CommandHelpEntry {
 	 * @type {string[]}
 	 * @readonly
 	 */
-	get usage(): string[] {
+	get usage() {
 		if (!this._usage) return [inlineCode(`/${this.name}`)];
-		return this._usage.map(val => inlineCode(`/${this.name} ${val}`));
+		return this._usage.map((val) => inlineCode(`/${this.name} ${val}`));
 	}
 
 	/**
@@ -87,13 +79,15 @@ export class CommandHelpEntry {
 	 * @param json {{description: string, name: string, usage?: string[]}
 	 * @returns {CommandHelpEntry}
 	 */
-	static fromJSON(json: SerializedCommandHelpEntry): CommandHelpEntry {
-		return new CommandHelpEntry(json.name, json.description, json.usage ?? []);
+	static fromJSON(json: {
+		description: string;
+		name: string;
+		usage?: string[];
+	}): CommandHelpEntry {
+		return new CommandHelpEntry(
+			json.name,
+			json.description,
+			...(json.usage ?? [])
+		);
 	}
-}
-
-interface SerializedCommandHelpEntry {
-	description: string;
-	name: string;
-	usage?: string[];
 }

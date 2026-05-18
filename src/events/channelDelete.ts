@@ -12,12 +12,18 @@ import {
 	roleMention,
 	userMention
 } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
+import { getGuildAuditLogChannelId } from '../lib/redis';
 
 export const name = Events.ChannelDelete;
 export const once = false;
 
 export const execute = async (channel: GuildChannel) => {
+	const auditLogChannelId = await getGuildAuditLogChannelId(channel.guild.id);
+	if (!auditLogChannelId) return;
+
+	const auditLogChannel = await channel.guild.channels.fetch(auditLogChannelId);
+	if (!auditLogChannel || !auditLogChannel.isTextBased()) return;
+
 	const embed = new EmbedBuilder()
 		.setTitle('Channel Deleted')
 		.setDescription(channelMention(channel.id))
@@ -30,7 +36,7 @@ export const execute = async (channel: GuildChannel) => {
 				name: 'Permissions',
 				value: channel.permissionOverwrites.cache
 					.map(
-						overwrite =>
+						(overwrite) =>
 							`${
 								overwrite.type === OverwriteType.Role
 									? roleMention(overwrite.id)
@@ -48,7 +54,6 @@ export const execute = async (channel: GuildChannel) => {
 			iconURL: channel.guild.members.me?.displayAvatarURL(),
 			text: 'Powered by DisCog'
 		});
-
 	if (channel instanceof BaseGuildTextChannel) {
 		embed.addFields(
 			{
@@ -87,9 +92,7 @@ export const execute = async (channel: GuildChannel) => {
 			}
 		);
 	}
-	await (
-		await getGuildAuditLoggingChannel(channel.guild)
-	)?.send({
+	await auditLogChannel.send({
 		embeds: [embed]
 	});
 };

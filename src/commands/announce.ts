@@ -6,26 +6,26 @@ import {
 	PermissionFlagsBits,
 	SlashCommandBuilder
 } from 'discord.js';
-import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
 
 export const data = new SlashCommandBuilder()
 	.setName('announce')
 	.setDescription('Creates an announcement in the specified channel')
 	.setContexts(InteractionContextType.Guild)
-	.addChannelOption(option => {
+	.addChannelOption((option) => {
 		return option
 			.setName('channel')
 			.setDescription('The channel to send the announcement to')
 			.addChannelTypes(ChannelType.GuildText)
 			.setRequired(true);
 	})
-	.addStringOption(option => {
+	.addStringOption((option) => {
 		return option
 			.setName('message')
 			.setDescription('The message to be announced')
 			.setRequired(true);
 	})
-	.addStringOption(option => {
+	.addStringOption((option) => {
 		return option
 			.setName('mentions')
 			.setDescription('Add all roles you want to ping')
@@ -41,12 +41,14 @@ export const help = new CommandHelpEntry(
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.deferReply();
+
 	const channel = interaction.options.getChannel('channel'),
 		message = interaction.options.getString('message'),
 		msgContent = interaction.options.getString('mentions');
-	if (!channel || !(channel instanceof BaseGuildTextChannel) || !message) {
+
+	if (!channel || !(channel instanceof BaseGuildTextChannel) || !message)
 		throw new Error();
-	}
+
 	await channel.send({
 		content: msgContent || undefined,
 		embeds: [
@@ -54,7 +56,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				color: 0x00ff00,
 				description: message,
 				footer: {
-					// eslint-disable-next-line camelcase
 					icon_url: interaction.client.user.displayAvatarURL(),
 					text: 'Powered by DisCog'
 				},
@@ -62,6 +63,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			}
 		]
 	});
+
 	await interaction.editReply({
 		content: 'Done.'
 	});

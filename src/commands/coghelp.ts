@@ -4,9 +4,11 @@ import {
 	SlashCommandBuilder,
 	inlineCode
 } from 'discord.js';
-import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
 import { Jsoning } from 'jsoning';
 import { Collection } from '@discordjs/collection';
+import { logger } from '../logger';
+import { SerializedCommandHelpEntry } from '../lib/discord/types';
 
 export const help = new CommandHelpEntry(
 	'coghelp',
@@ -17,14 +19,16 @@ export const help = new CommandHelpEntry(
 export const data = new SlashCommandBuilder()
 	.setName('coghelp')
 	.setDescription('Shows help')
-	.addStringOption(option => {
+	.addStringOption((option) => {
 		return option
 			.setName('command')
 			.setDescription('The command to show help for')
 			.setChoices(
-				...Object.keys(new Jsoning('botfiles/cmnds.db.json').all()).map(key => {
-					return { name: key, value: key };
-				})
+				...Object.keys(new Jsoning('botfiles/cmnds.db.json').all()).map(
+					(key) => {
+						return { name: key, value: key };
+					}
+				)
 			)
 			.setRequired(false);
 	});
@@ -41,21 +45,26 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			text: `Requested by ${interaction.user.username}`
 		})
 		.setColor(0x00ff00);
+
 	const command = interaction.options.getString('command');
 	const fields = new Collection(
-		Object.values(new Jsoning('botfiles/cmnds.db.json').all()).map(v => [
-			v.name,
-			CommandHelpEntry.fromJSON(v)
-		])
+		Object.values(
+			(await new Jsoning('botfiles/cmnds.db.json').all()) as unknown as Record<
+				string,
+				SerializedCommandHelpEntry
+			>
+		).map((v) => [v.name, CommandHelpEntry.fromJSON(v)])
 	);
-	if (!command) embed.setFields(...fields.map(v => v.toDiscordAPIEmbedField()));
+
+	logger.debug(fields);
+
+	if (!command)
+		embed.setFields(...fields.map((v) => v.toDiscordAPIEmbedField()));
 	else if (fields.has(command))
 		embed.setFields(fields.get(command)!.toDiscordAPIEmbedField());
 	else
 		embed.setDescription(
-			`Command ${inlineCode(command)} not found. Use ${inlineCode(
-				'/coghelp'
-			)} to see all commands.`
+			`Command ${inlineCode(command)} not found. Use ${inlineCode('/coghelp')} to see all commands.`
 		);
 
 	await interaction.reply({

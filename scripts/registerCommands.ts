@@ -4,7 +4,7 @@ import { clientId } from '../src/config';
 import { fileURLToPath } from 'url';
 import { readdir } from 'fs/promises';
 import Jsoning, { JSONValue } from 'jsoning';
-import { Command } from '../src/struct/discord/types';
+import { Command } from '../src/lib/discord/types';
 
 export const commandsPath = join(
 	dirname(fileURLToPath(import.meta.url)),
@@ -24,7 +24,7 @@ export async function registerCommands(
 	// eslint-disable-next-line no-param-reassign
 	commandFiles =
 		commandFiles ??
-		(await readdir(commandsPath)).filter(file => file.endsWith('.ts'));
+		(await readdir(commandsPath)).filter((file) => file.endsWith('.ts'));
 	const cmndb = new Jsoning('botfiles/cmnds.db.json');
 	for (const file of commandFiles) {
 		const filePath = join(commandsPath, file);

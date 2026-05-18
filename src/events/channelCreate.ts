@@ -5,21 +5,26 @@ import {
 	GuildChannel,
 	channelMention
 } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
+import { getGuildAuditLogChannelId } from '../lib/redis';
 
 export const name = Events.ChannelCreate;
 export const once = false;
 
 export const execute = async (channel: GuildChannel) => {
+	const auditLogChannelId = await getGuildAuditLogChannelId(channel.guild.id);
+	if (!auditLogChannelId) return;
+
+	const auditLogChannel = await channel.guild.channels.fetch(auditLogChannelId);
+	if (!auditLogChannel || !auditLogChannel.isTextBased()) return;
+
 	const entry = (
 		await channel.guild.fetchAuditLogs({
 			limit: 1,
 			type: AuditLogEvent.ChannelCreate
 		})
 	).entries.first();
-	await (
-		await getGuildAuditLoggingChannel(channel.guild)
-	)?.send({
+
+	await auditLogChannel.send({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Channel Created')

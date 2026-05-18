@@ -3,46 +3,55 @@ import {
 	ChatInputCommandInteraction,
 	ModalBuilder,
 	SlashCommandBuilder,
-	Snowflake,
 	TextInputBuilder,
 	TextInputStyle,
 	userMention
 } from 'discord.js';
 import Jsoning from 'jsoning';
+import {
+	blacklistUser,
+	getBlacklistIds,
+	getDeveloperIds,
+	isBlacklisted,
+	isDeveloper,
+	makeDeveloper,
+	unBlacklistUser,
+	unMakeDeveloper
+} from '../lib/redis';
 
 export const data = new SlashCommandBuilder()
 	.setName('dev')
 	.setDescription('Developer-only command')
-	.addSubcommand(subcommand => {
-		return subcommand
-			.setName('global')
-			.setDescription('Send a global system announcement');
-	})
-	.addSubcommandGroup(group => {
+	// .addSubcommand((subcommand) => {
+	// 	return subcommand
+	// 		.setName('global')
+	// 		.setDescription('Send a global system announcement');
+	// })
+	.addSubcommandGroup((group) => {
 		return group
 			.setName('whitelist')
 			.setDescription('Manage the bot developer whitelist')
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('add')
 					.setDescription('Add a user to the dev list')
-					.addUserOption(option => {
+					.addUserOption((option) => {
 						return option
 							.setName('user')
 							.setDescription('The user to add to the dev list')
 							.setRequired(true);
 					});
 			})
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('ls')
 					.setDescription('List all users in the dev list');
 			})
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('rm')
 					.setDescription('Remove a user from the dev list')
-					.addUserOption(option => {
+					.addUserOption((option) => {
 						return option
 							.setName('user')
 							.setDescription('The user to remove from the dev list')
@@ -50,31 +59,31 @@ export const data = new SlashCommandBuilder()
 					});
 			});
 	})
-	.addSubcommandGroup(group => {
+	.addSubcommandGroup((group) => {
 		return group
 			.setName('blacklist')
 			.setDescription('Manage the bot user blacklist')
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('add')
 					.setDescription('Blacklist a user from using the bot')
-					.addUserOption(option => {
+					.addUserOption((option) => {
 						return option
 							.setName('user')
 							.setDescription('The user to blacklist')
 							.setRequired(true);
 					});
 			})
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('ls')
 					.setDescription('List all users in the blacklist');
 			})
-			.addSubcommand(subcommand => {
+			.addSubcommand((subcommand) => {
 				return subcommand
 					.setName('rm')
 					.setDescription('Remove a user from the blacklist')
-					.addUserOption(option => {
+					.addUserOption((option) => {
 						return option
 							.setName('user')
 							.setDescription('The user to remove from the blacklist')
@@ -85,49 +94,47 @@ export const data = new SlashCommandBuilder()
 	.setDMPermission(true);
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-	const db = new Jsoning('botfiles/dev.db.json');
-	const whitelist = ((await db.get('whitelist')) as string[]) || [];
-	const blacklist = ((await db.get('blacklist')) as string[]) || [];
-	if (!whitelist.includes(interaction.user.id)) {
-		await interaction.reply('Restricted Commmand');
+	await interaction.deferReply({ ephemeral: true });
+
+	if (!isDeveloper(interaction.user.id)) {
+		await interaction.editReply('You are not a developer.');
 		return;
 	}
+
 	switch (interaction.options.getSubcommandGroup()) {
 		case 'blacklist':
 			switch (interaction.options.getSubcommand()) {
 				case 'add': {
 					const auser = interaction.options.getUser('user', true);
-					if (blacklist.includes(auser.id)) {
-						await interaction.reply('User is already blacklisted.');
+					if (await isBlacklisted(auser.id)) {
+						await interaction.editReply('User is already blacklisted.');
 						return;
 					}
-					await db.set('blacklist', [...blacklist, auser.id]);
-					await interaction.reply('Done.');
+					await blacklistUser(auser.id);
+					await interaction.editReply('Done.');
 					break;
 				}
 				case 'ls': {
+					const blacklist = await getBlacklistIds();
 					if (blacklist.length === 0) {
-						await interaction.reply('No users are blacklisted.');
+						await interaction.editReply('No users are blacklisted.');
 						return;
 					}
-					await interaction.reply(
+					await interaction.editReply(
 						`Blacklisted users: ${blacklist
-							.map(id => userMention(id))
+							.map((id) => userMention(id))
 							.join(', ')}`
 					);
 					break;
 				}
 				case 'rm': {
 					const ruser = interaction.options.getUser('user', true);
-					if (!blacklist.includes(ruser.id)) {
-						await interaction.reply('User is not blacklisted.');
+					if (!(await isBlacklisted(ruser.id))) {
+						await interaction.editReply('User is not blacklisted.');
 						return;
 					}
-					await db.set(
-						'blacklist',
-						blacklist.filter((id: Snowflake) => id !== ruser.id)
-					);
-					await interaction.reply('Done.');
+					await unBlacklistUser(ruser.id);
+					await interaction.editReply('Done.');
 					break;
 				}
 			}
@@ -136,64 +143,62 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			switch (interaction.options.getSubcommand()) {
 				case 'add': {
 					const auser = interaction.options.getUser('user', true);
-					if (whitelist.includes(auser.id)) {
-						await interaction.reply('User is already whitelisted.');
+					if (await isDeveloper(auser.id)) {
+						await interaction.editReply('User is already whitelisted.');
 						return;
 					}
-					await db.set('whitelist', [...whitelist, auser.id]);
-					await interaction.reply('Done.');
+					await makeDeveloper(auser.id);
+					await interaction.editReply('Done.');
 					break;
 				}
 				case 'ls': {
+					const whitelist = await getDeveloperIds();
 					if (whitelist.length === 0) {
-						await interaction.reply('No users are whitelisted.');
+						await interaction.editReply('No users are whitelisted.');
 						return;
 					}
-					await interaction.reply({
+					await interaction.editReply({
 						allowedMentions: { parse: [] },
-						content: `Blacklisted users: ${whitelist
-							.map(id => userMention(id))
+						content: `Whitelisted users: ${whitelist
+							.map((id) => userMention(id))
 							.join(', ')}`
 					});
 					break;
 				}
 				case 'rm': {
 					const ruser = interaction.options.getUser('user', true);
-					if (!whitelist.includes(ruser.id)) {
-						await interaction.reply('User is not whitelisted.');
+					if (!(await isDeveloper(ruser.id))) {
+						await interaction.editReply('User is not whitelisted.');
 						return;
 					}
-					await db.set(
-						'whitelist',
-						whitelist.filter((id: Snowflake) => id !== ruser.id)
-					);
-					await interaction.reply('Done.');
+					await unMakeDeveloper(ruser.id);
+					await interaction.editReply('Done.');
 					break;
 				}
 			}
 			break;
-		case undefined:
-		default: {
-			switch (interaction.options.getSubcommand()) {
-				case 'global': {
-					interaction.showModal(
-						new ModalBuilder()
-							.setTitle('DisCog Global System Announcement')
-							.setCustomId('/global')
-							.addComponents(
-								new ActionRowBuilder<TextInputBuilder>().addComponents(
-									new TextInputBuilder()
-										.setCustomId('/global.text')
-										.setStyle(TextInputStyle.Paragraph)
-										.setLabel('Message')
-										.setPlaceholder('The message to announce in all guilds')
-								)
-							)
-					);
-					break;
-				}
-			}
-			break;
-		}
+		// case undefined:
+		// default: {
+		// 	switch (interaction.options.getSubcommand()) {
+		// 		case 'global': {
+		// 			interaction.showModal(
+		// 				new ModalBuilder()
+		// 					.setTitle('DisCog Global System Announcement')
+		// 					.setCustomId('/global')
+		// 					.addComponents(
+		// 						new ActionRowBuilder<TextInputBuilder>().addComponents(
+		// 							new TextInputBuilder()
+		// 								.setCustomId('/global.text')
+		// 								.setStyle(TextInputStyle.Paragraph)
+		// 								.setLabel('Message')
+		// 								.setPlaceholder('The message to announce in all guilds')
+		// 						)
+		// 					)
+		// 			);
+		// 			break;
+		// 		}
+		// 	}
+		// 	break;
+		// }
 	}
 };

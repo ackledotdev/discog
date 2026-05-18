@@ -1,4 +1,5 @@
 import 'dotenv/config';
+
 import {
 	ActivityType,
 	CategoryChannel,
@@ -11,35 +12,35 @@ import {
 	MediaChannel,
 	OAuth2Scopes,
 	PresenceUpdateStatus,
-	Snowflake,
+	SlashCommandBuilder,
 	TimestampStyles,
 	codeBlock,
 	time,
 	userMention
 } from 'discord.js';
-import { CommandClient } from './struct/discord/Extend';
-import { Methods, createServer } from './server';
-import { DENO_KV_URL, DatabaseKeys, PORT, permissionsBits } from './config';
+import { CommandClient } from './lib/discord/Extend';
+import { METHODS, createServer } from './server';
+import { PORT, permissionsBits } from './config';
 import { argv, cwd, stdout } from 'process';
-import { Command, Event } from './struct/discord/types';
 import { InteractionHandlers } from './interactionHandlers';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger';
 import { readdirSync } from 'fs';
-import { RecurrenceSpecObjLit, scheduleJob } from 'node-schedule';
-import { openKv } from '@deno/kv';
-import { Jsoning } from 'jsoning';
-import { BirthdayData } from './struct/database';
+import { scheduleJob } from 'node-schedule';
+import { Jsoning, JSONValue } from 'jsoning';
+import { Request, Response } from 'express';
+import { CommandHelpEntry } from './lib/class/CommandHelpEntry';
+import { getDeveloperIds, isBlacklisted } from './lib/redis';
+import { Command } from './lib/discord/types';
 
 argv.shift();
 argv.shift();
+
 if (argv.includes('-d')) {
 	logger.level = 'debug';
 	logger.debug('Debug mode enabled.');
 }
-
-logger.debug('Loaded dev database.');
 
 const client = new CommandClient({
 	intents: [
@@ -66,31 +67,32 @@ const client = new CommandClient({
 	}
 });
 logger.debug('Created client instance.');
-
 const server = createServer(
 	{
-		handler: (_req, res) =>
+		handler: (_req: Request, res: Response) =>
 			res.redirect(
 				client.generateInvite({
 					permissions: permissionsBits,
 					scopes: [OAuth2Scopes.Bot, OAuth2Scopes.Guilds, OAuth2Scopes.Identify]
 				})
 			),
-		method: Methods.GET,
+		method: METHODS.GET,
 		route: '/invite'
 	},
 	{
-		handler: (_req, res) => res.redirect('/status'),
-		method: Methods.GET,
+		handler: (_req: Request, res: Response) => res.redirect('/status'),
+		method: METHODS.GET,
 		route: '/'
 	},
 	{
-		handler: (_req, res) => res.sendStatus(client.isReady() ? 200 : 503),
-		method: Methods.GET,
+		handler: (_req: Request, res: Response) => {
+			res.sendStatus(client.isReady() ? 200 : 503);
+		},
+		method: METHODS.GET,
 		route: '/status'
 	},
 	{
-		handler: (req, res) => {
+		handler: (req: Request, res: Response) => {
 			if (
 				req.headers['content-type'] !== 'application/json' &&
 				req.headers['content-type'] != undefined
@@ -103,20 +105,20 @@ const server = createServer(
 					.send({
 						clientPing: client.ws.ping,
 						clientReady: client.isReady(),
-						commandCount: client.application!.commands.cache.size,
-						guildCount: client.application!.approximateGuildCount,
-						lastReady: client.readyAt!.valueOf(),
+						commandCount: client.application.commands.cache.size,
+						guildCount: client.application.approximateGuildCount,
+						lastReady: client.readyAt.valueOf(),
 						timestamp: Date.now(),
 						uptime: client.uptime
 					})
 					.end();
 			else res.status(503).end();
 		},
-		method: Methods.GET,
+		method: METHODS.GET,
 		route: '/bot'
 	},
 	{
-		handler: (req, res) => {
+		handler: (req: Request, res: Response) => {
 			if (
 				req.headers['content-type'] !== 'application/json' &&
 				req.headers['content-type'] != undefined
@@ -127,7 +129,7 @@ const server = createServer(
 					.status(200)
 					.contentType('application/json')
 					.send({
-						commands: client.commands.map(command => ({
+						commands: client.commands.map((command) => ({
 							data: command.data.toJSON(),
 							help: command.help?.toJSON()
 						})),
@@ -136,17 +138,20 @@ const server = createServer(
 					.end();
 			else res.status(503).end();
 		},
-		method: Methods.GET,
+		method: METHODS.GET,
 		route: '/commands'
 	}
 );
+
 logger.debug('Created server instance.');
 
 const commandsPath = join(dirname(fileURLToPath(import.meta.url)), 'commands');
-const commandFiles = readdirSync(commandsPath).filter(file =>
+const commandFiles = readdirSync(commandsPath).filter((file) =>
 	file.endsWith('.ts')
 );
+
 logger.debug('Loaded command files.');
+
 const cmndb = new Jsoning('botfiles/cmnds.db.json');
 for (const file of commandFiles) {
 	const filePath = join(commandsPath, file);
@@ -156,36 +161,31 @@ for (const file of commandFiles) {
 	if (command.help)
 		await cmndb.set(
 			command.data.name,
-			// @ts-expect-error types
-			command.help.toJSON()
+			command.help.toJSON() as unknown as JSONValue
 		);
 }
 client.commands.freeze();
 logger.info('Loaded commands.');
-
 const eventsPath = join(cwd(), 'src', 'events');
-const eventFiles = readdirSync(eventsPath).filter(file => file.endsWith('.ts'));
+const eventFiles = readdirSync(eventsPath).filter((file) =>
+	file.endsWith('.ts')
+);
 for (const file of eventFiles) {
 	const filePath = join(eventsPath, file);
-	const event: Event = await import(filePath);
+	const event = await import(filePath);
 	if (event.once)
 		client.once(event.name, async (...args) => await event.execute(...args));
 	else client.on(event.name, async (...args) => await event.execute(...args));
 }
 logger.debug('Loaded events.');
-
 client
 	.on(Events.ClientReady, () => logger.info('Client#ready'))
-	.on(Events.InteractionCreate, async interaction => {
+	.on(Events.InteractionCreate, async (interaction) => {
 		if (interaction.user.bot) return;
+
 		try {
-			const blacklisted = (
-				await (
-					await openKv(DENO_KV_URL)
-				).get<Snowflake[]>([DatabaseKeys.Blacklist])
-			)?.value;
 			if (
-				(blacklisted ?? []).includes(interaction.user.id) &&
+				(await isBlacklisted(interaction.user.id)) &&
 				interaction.isCommand()
 			) {
 				await interaction.reply({
@@ -208,16 +208,15 @@ client
 				await command.execute(interaction);
 			} catch (e) {
 				logger.error(e);
-				if (interaction.replied || interaction.deferred) {
+				if (interaction.replied || interaction.deferred)
 					await interaction.editReply(
 						'There was an error while running this command.'
 					);
-				} else {
+				else
 					await interaction.reply({
 						content: 'There was an error while running this command.',
 						ephemeral: true
 					});
-				}
 			}
 		} else if (interaction.isModalSubmit()) {
 			try {
@@ -295,12 +294,13 @@ client
 			}
 		}
 	})
-	.on(Events.Debug, m => logger.debug(m))
-	.on(Events.Error, m => {
+	.on(Events.Debug, (m) => logger.debug(m))
+	.on(Events.Error, (m) => {
 		logger.error(m);
 		sendError(m);
 	})
-	.on(Events.Warn, m => logger.warn(m));
+	.on(Events.Warn, (m) => logger.warn(m));
+
 logger.debug('Set up client events.');
 
 await client
@@ -315,17 +315,6 @@ process.on('SIGINT', () => {
 	process.exit(0);
 });
 
-// Schedule the bdayInterval function to run every day at 12:00 AM PST
-scheduleJob(
-	{
-		tz: 'America/Los_Angeles',
-		hour: 0,
-		minute: 0
-	} satisfies RecurrenceSpecObjLit,
-	() => bdayInterval().catch(e => logger.error(e))
-);
-logger.debug('Scheduled birthday interval.');
-
 server.listen(process.env.PORT ?? PORT);
 logger.info(`Listening to HTTP server on port ${process.env.PORT ?? PORT}.`);
 
@@ -335,72 +324,23 @@ logger.debug('Set up error handling.');
 
 logger.info('Process setup complete.');
 
-async function bdayInterval() {
-	const today = new Date();
-	const allBirthdays: { id: string; data: BirthdayData }[] = [];
-	for await (const val of (await openKv(DENO_KV_URL)).list({
-		prefix: [DatabaseKeys.Bday]
-	}))
-		allBirthdays.push({
-			id: val.key[1].toString(),
-			data: val.value as BirthdayData
-		});
-	const birthdaysToday = allBirthdays.filter(
-		({ data }) =>
-			data.month == today.getMonth() + 1 && data.date == today.getDate()
-	);
-	for (const { id } of birthdaysToday) {
-		const user = await client.users.fetch(id);
-		for (let guild of client.guilds.cache.values()) {
-			guild = await guild.fetch();
-			if (!guild.members.cache.has(id)) return;
-			const birthdayChannels = guild.channels.cache.filter(channel => {
-				return !!(
-					(channel.type == ChannelType.GuildAnnouncement ||
-						channel.type == ChannelType.GuildText) &&
-					(channel.name.toLowerCase().includes('bday') ||
-						channel.name.toLowerCase().includes('birthday') ||
-						channel.name.toLowerCase().includes('b-day'))
-				);
-			});
-			const channel = birthdayChannels.first() || guild.systemChannel || null;
-			if (
-				!channel ||
-				channel instanceof CategoryChannel ||
-				channel instanceof ForumChannel ||
-				channel instanceof MediaChannel
-			)
-				continue;
-			const replies = [
-				`Do you know what day it is? It's ${userMention(user.id)}'s birthday!`,
-				`It's ${userMention(user.id)}'s birthday!`,
-				`Time to celebrate ${userMention(user.id)}'s birthday!`,
-				`Everyone wish ${userMention(user.id)} a happy birthday!`,
-				`Happy birthday, ${userMention(user.id)}!`,
-				`🎉${userMention(user.id)}🎉\n${codeBlock(
-					`new Birthday({
-	user: '${userMention(user.id)}',
-	day: ${today.toLocaleDateString()}
-});`
-				)}`
-			];
-			await channel.send(replies[Math.floor(replies.length * Math.random())]);
-		}
-	}
-}
-
-async function sendError(e: Error) {
-	for (const devId of (
-		await (await openKv(DENO_KV_URL)).get<Snowflake[]>([DatabaseKeys.Devs])
-	)?.value ?? []) {
-		client.users.fetch(devId).then(user => {
+async function sendError(e: unknown) {
+	for (const devId of await getDeveloperIds()) {
+		client.users.fetch(devId).then((user) => {
 			const date = new Date();
 			user.send({
 				embeds: [
 					new EmbedBuilder()
 						.setTitle('Error Log')
-						.setDescription(e.message)
-						.addFields({ name: 'Stack Trace', value: codeBlock(e.stack ?? '') })
+						.setDescription(e instanceof Error ? e.message : String(e))
+						.addFields({
+							name: 'Stack Trace',
+							value: codeBlock(
+								e instanceof Error
+									? (e.stack ?? 'No stack trace available')
+									: String(e)
+							)
+						})
 						.addFields({
 							name: 'ISO 8601 Timestamp',
 							value: date.toISOString()

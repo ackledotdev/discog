@@ -6,16 +6,23 @@ import {
 	time,
 	userMention
 } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
+import { getGuildAuditLogChannelId } from '../lib/redis';
 
 export const name = Events.InviteDelete;
 export const once = false;
+
 export const execute = async (invite: Invite) => {
 	if (!invite.guild) return;
+
+	const channelId = await getGuildAuditLogChannelId(invite.guild.id);
+	if (!channelId) return;
+
 	const guild = await invite.guild.fetch();
-	await (
-		await getGuildAuditLoggingChannel(guild)
-	)?.send({
+
+	const channel = await guild.channels.fetch(channelId);
+	if (!channel || !channel.isTextBased()) return;
+
+	await channel.send({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Invite Deleted')
@@ -60,7 +67,7 @@ export const execute = async (invite: Invite) => {
 					},
 					{
 						name: 'Created At',
-						value: time(invite.createdTimestamp!)
+						value: time(invite.createdAt ?? undefined)
 					}
 				)
 		]

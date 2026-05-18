@@ -1,11 +1,14 @@
 import { Events, GuildScheduledEvent } from 'discord.js';
-import { getGuildAuditLoggingChannel } from './a.getGuildConf';
 
 export const name = Events.GuildScheduledEventCreate;
 export const once = false;
 
 export const execute = async (event: GuildScheduledEvent) => {
-	await (
-		await getGuildAuditLoggingChannel(event.guild!)
-	)?.send(`Event Created: ${event.url}`);
+	const channelId = event.channelId;
+	if (!channelId) return;
+
+	const channel = await event.guild?.channels.fetch(channelId);
+	if (!channel || !channel.isTextBased()) return;
+
+	await channel.send(`New Event Created: ${event.url}`);
 };

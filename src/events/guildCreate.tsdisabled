@@ -1,0 +1,19 @@
+import { EmbedBuilder, Events, Guild, inlineCode, underline } from 'discord.js';
+
+export const name = Events.GuildCreate;
+export const once = false;
+
+export const execute = async (guild: Guild) => {
+	if (guild.systemChannel)
+		guild.systemChannel.send({
+			embeds: [
+				new EmbedBuilder()
+					.setColor(0x0f0)
+					.setTitle('DisCog is here!')
+					.setDescription(
+						`DisCog is a general purpose Discord bot. Use ${inlineCode('/coghelp')} or view my profile to find out what I can do!\n${underline(`Admins, be sure to check out the ${inlineCode('/admin')} and ${inlineCode('/conf')} commands! These slash commands are already restricted to admins, so you don't need to worry about that.`)}`
+					)
+					.setTimestamp()
+			]
+		});
+};

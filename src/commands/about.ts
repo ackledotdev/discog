@@ -8,7 +8,7 @@ import {
 	hyperlink,
 	inlineCode
 } from 'discord.js';
-import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
 
 export const data = new SlashCommandBuilder()
 	.setName('about')
@@ -22,18 +22,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 			new ActionRowBuilder<ButtonBuilder>().setComponents(
 				new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
-					.setURL('https://discog.localplayer.dev')
+					.setURL('https://discog.ackle.dev/')
 					.setLabel('Website'),
+
 				new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
-					.setURL('https://github.com/akpi816218/discog/commits/')
-					.setLabel('Changelog'),
-				new ButtonBuilder()
-					.setStyle(ButtonStyle.Link)
-					.setURL('https://discog.localplayer.dev/invite/support-server')
-					.setLabel('Support/Development Server')
+					.setURL('https://github.com/ackledotdev/discog')
+					.setLabel('Source')
 			)
 		],
+
 		embeds: [
 			new EmbedBuilder()
 				.setColor(0x00ff00)
@@ -49,26 +47,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				})
 				.setTitle('About DisCog')
 				.setDescription(
-					`${hyperlink(
-						'DisCog',
-						'https://discog.localplayer.dev'
-					)} is a versatile general purpose Discord bot featuring utility commands as well a random collection of other commands. For a full list of commands, use the ${inlineCode(
-						'/coghelp'
-					)} command.\n\nDisCog can also send you birthday wishes if you use the ${inlineCode(
-						'/bday register'
-					)} command to register your birthdate.\n\nDisCog is open source and can be found on ${hyperlink(
-						'GitHub',
-						'https://github.com/akpi816218/discog'
-					)}.\n\nAdditionally, you can join the ${hyperlink(
-						'development and support Discord server',
-						'https://discog.localplayer.dev/invite/support-server'
-					)} to get support and suggest features. If you have any questions, feel free to ask in the server.\n\nAll of the code for this bot is licensed under the ${hyperlink(
-						'GNU General Public License v3.0',
-						'https://github.com/akpi816218/discog/blob/gitmaster/LICENSE'
-					)}.\n\nAll features are free to use, but if you would like to support the development of this bot, you can donate ${hyperlink(
-						'here',
-						'https://discog.localplayer.dev/donate'
-					)}.`
+					`${hyperlink('DisCog', 'https://discog.ackle.dev')} is a versatile general purpose Discord bot featuring utility commands as well a random collection of other commands. For a full list of commands, use the ${inlineCode('/coghelp')} command.\n\n` +
+						`DisCog can also send you birthday wishes if you use the ${inlineCode('/bday register')} command to register your birthdate.\n\n` +
+						`DisCog is open source and can be found on ${hyperlink('GitHub', 'https://github.com/ackledotdev/discog')}.\n\n` +
+						`All of the code for this bot is licensed under the ${hyperlink('GNU General Public License v3.0', 'https://github.com/ackledotdev/discog/blob/master/LICENSE')}.`
 				)
 		]
 	});

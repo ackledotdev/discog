@@ -9,26 +9,29 @@ import {
 	time,
 	userMention
 } from 'discord.js';
-import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
 
 export const data = new SlashCommandBuilder()
 	.setName('info')
 	.setDescription('Get some info')
-	.addSubcommand(subcommand => {
+	.addSubcommand((subcommand) => {
 		return subcommand.setName('guild').setDescription('Guild info');
 	})
-	.addSubcommand(subcommand => {
+	.addSubcommand((subcommand) => {
 		return subcommand.setName('channel').setDescription('Channel info');
 	})
 	.setContexts(InteractionContextType.Guild);
 
-export const help = new CommandHelpEntry('info', 'Gets some info', [
+export const help = new CommandHelpEntry(
+	'info',
+	'Gets some info',
 	'channel',
 	'guild'
-]);
+);
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.reply('Working...');
+
 	switch (interaction.options.getSubcommand(false)) {
 		case 'channel':
 			if (
@@ -40,7 +43,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				);
 				return;
 			}
+
 			const channel = await interaction.channel.fetch();
+
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder().setTitle('Channel Info').addFields(
@@ -58,16 +63,19 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				]
 			});
 			break;
+
 		case 'guild':
 			if (!interaction.guild) {
 				await interaction.editReply('Error: Not in a guild');
 				return;
 			}
+
 			const guild = await interaction.guild.fetch();
 			if (!guild.available) {
 				await interaction.editReply('Internal error: Guild not available');
 				return;
 			}
+			
 			await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -79,9 +87,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 							{ name: 'Member Count', value: guild.memberCount.toString() },
 							{
 								name: 'Owner',
-								value: `${
-									(await guild.fetchOwner()).user.username
-								} (${userMention(guild.ownerId)})`
+								value: `${(await guild.fetchOwner()).user.username} (${userMention(guild.ownerId)})`
 							},
 							{
 								name: 'Created At',

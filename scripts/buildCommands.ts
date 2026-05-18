@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import 'dotenv/config';
 import { commandsPath, registerCommands } from './registerCommands';
 import { argv } from 'process';
@@ -9,12 +8,12 @@ argv.shift();
 
 let commandFiles: string[];
 if (argv.length == 0) {
-	commandFiles = (await readdir(commandsPath)).filter(file =>
+	commandFiles = (await readdir(commandsPath)).filter((file) =>
 		file.endsWith('.ts')
 	);
 } else {
 	commandFiles = (await readdir(commandsPath)).filter(
-		file => file.endsWith('.ts') && argv.includes(file.replace('.ts', ''))
+		(file) => file.endsWith('.ts') && argv.includes(file.replace('.ts', ''))
 	);
 }
 if (commandFiles.length == 0) {

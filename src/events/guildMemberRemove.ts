@@ -1,31 +1,22 @@
-import {
-	EmbedBuilder,
-	Events,
-	GuildMember,
-	NewsChannel,
-	TextChannel,
-	userMention
-} from 'discord.js';
-import { getGuildGreetingData } from './a.getGuildConf';
+import { EmbedBuilder, Events, GuildMember, userMention } from 'discord.js';
+import { getGuildGreetingsConfig } from '../lib/redis';
+
 export const name = Events.GuildMemberRemove;
 export const once = false;
 
 export const execute = async (member: GuildMember) => {
-	const config = await getGuildGreetingData(member.guild);
-	if (!config?.goodbyeEnabled) return;
-	await (
-		(await member.guild.channels.fetch(config.channel)) as
-			| NewsChannel
-			| TextChannel
-			| undefined
-	)?.send({
+	const greetingsConfig = await getGuildGreetingsConfig(member.guild.id);
+	if (!greetingsConfig.goodbyeEnabled || !greetingsConfig.channel) return;
+
+	const channel = await member.guild.channels.fetch(greetingsConfig.channel);
+	if (!channel || !channel.isTextBased()) return;
+
+	await channel.send({
 		embeds: [
 			new EmbedBuilder()
 				.setTitle('Member Left')
 				.setDescription(
-					`${userMention(member.id)}\n Now at ${
-						(await member.guild.fetch()).memberCount
-					} members`
+					`${userMention(member.id)}\n Now at ${(await member.guild.fetch()).memberCount} members`
 				)
 				.setColor(0xff0000)
 				.setTimestamp()

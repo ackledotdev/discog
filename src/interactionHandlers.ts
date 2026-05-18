@@ -1,14 +1,11 @@
-/* eslint-disable indent */
 import 'dotenv/config';
+
 import {
-	APIEmbedField,
 	ButtonInteraction,
+	ContextMenuCommandInteraction,
 	EmbedBuilder,
-	GuildMember,
-	MessageContextMenuCommandInteraction,
 	ModalSubmitInteraction,
 	PermissionFlagsBits,
-	Snowflake,
 	StringSelectMenuInteraction,
 	UserContextMenuCommandInteraction,
 	codeBlock,
@@ -18,13 +15,10 @@ import {
 } from 'discord.js';
 import { format } from 'prettier';
 import { logger } from './logger';
-import { openKv } from '@deno/kv';
-import { DENO_KV_URL, DatabaseKeys } from './config';
-
-const db = await openKv(DENO_KV_URL);
+import { getDeveloperIds } from './lib/redis';
 
 export const InteractionHandlers = {
-	async Button(interaction: ButtonInteraction): Promise<void> {
+	async Button(interaction: ButtonInteraction) {
 		switch (interaction.customId) {
 			case '/admin_channel_clear': {
 				await interaction.deferReply({ ephemeral: true });
@@ -59,24 +53,24 @@ export const InteractionHandlers = {
 			}
 		}
 	},
+
 	ContextMenu: {
-		async Message(
-			interaction: MessageContextMenuCommandInteraction
-		): Promise<void> {
+		async Message(interaction: ContextMenuCommandInteraction) {
 			switch (interaction.commandName) {
 			}
 		},
-		async User(interaction: UserContextMenuCommandInteraction): Promise<void> {
+
+		async User(interaction: UserContextMenuCommandInteraction) {
 			switch (interaction.commandName) {
 				case 'User Info': {
 					const infouser = await interaction.targetUser.fetch(true);
-					const mutfields: APIEmbedField[] = [];
+					const mutfields = [];
 					if (interaction.guild && interaction.targetMember) {
 						mutfields.push({
 							name: 'Server join date',
 							value: time(
-								// eslint-disable-next-line no-extra-parens
-								(interaction.targetMember as GuildMember).joinedAt || undefined
+								(await interaction.guild.members.fetch(interaction.targetId))
+									.joinedAt || undefined
 							)
 						});
 					}
@@ -117,131 +111,11 @@ export const InteractionHandlers = {
 			}
 		}
 	},
-	async ModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+
+	async ModalSubmit(interaction: ModalSubmitInteraction) {
 		switch (interaction.customId) {
-			case '/contact_suggestion': {
-				await interaction.deferReply({ ephemeral: true });
-				const devs =
-						(await db.get<Snowflake[]>([DatabaseKeys.Devs])).value ?? [],
-					suggestion = interaction.fields.getTextInputValue('suggestion');
-				if (!devs || devs.length === 0)
-					throw new Error('No developers found in the database.');
-				for (const devId of devs) {
-					const dev = await interaction.client.users.fetch(devId);
-					await dev.send({
-						embeds: [
-							new EmbedBuilder()
-								.setTitle('New Suggestion')
-								.setDescription(suggestion)
-								.setTimestamp()
-								.setFooter({
-									iconURL: interaction.user.displayAvatarURL(),
-									text: `Suggested by ${userMention(interaction.user.id)} (${
-										interaction.user.tag
-									})`
-								})
-						]
-					});
-				}
-				await interaction.editReply(
-					'Your suggestion sent to developers! Thanks so much for helping us improve this bot!'
-				);
-				break;
-			}
-			case '/global': {
-				await interaction.reply('Working...');
-				const content = interaction.fields.getTextInputValue('/global.text');
-				const badGuilds: string[] = [];
-				for (const guild of interaction.client.guilds.cache.values()) {
-					if (
-						!guild.systemChannel ||
-						!guild.systemChannel
-							.permissionsFor(
-								guild.members.cache.get(
-									interaction.client.user.id
-								) as GuildMember
-							)
-							.has(PermissionFlagsBits.SendMessages)
-					) {
-						badGuilds.push(guild.name);
-						guild
-							.fetchOwner()
-							.then(member => member.createDM())
-							.then(dm =>
-								dm.send({
-									embeds: [
-										new EmbedBuilder()
-											.setTitle('DisCog Global System Announcement')
-											.setDescription(
-												`You are receiving this message because you are the owner of a guild which I am part of, and I have an important system message to deliver to your guild. However, your guild either does not have a system channel, or I do not have the necessary permissions to send the message. Because of this, I could not post the announcement. You can set a system channel by going to Server Settings > Overview > System Messages Channel and change channel permissions by right-clicking or long pressing (mobile) the system channel, selecting Edit Channel, and going to the Permissions category. In the meantime, please use my ${inlineCode(
-													'/announce'
-												)} command to deliver the following message to your guild.`
-											)
-											.setFields(
-												{ name: 'Guild Name', value: guild.name },
-												{ name: 'Message', value: content }
-											)
-									]
-								})
-							);
-						return;
-					}
-					try {
-						guild.systemChannel.send({
-							// Remove @everyone ping: does content need to have a value?
-							// eslint-disable-next-line capitalized-comments
-							// content: '',
-							embeds: [
-								new EmbedBuilder()
-									.setTitle('DisCog Global System Announcement')
-									.setDescription(content)
-									.setTimestamp()
-									.setFooter({
-										iconURL: interaction.user.displayAvatarURL(),
-										text: `Sent by ${interaction.user.tag}`
-									})
-							]
-						});
-					} catch (e) {
-						badGuilds.push(guild.name);
-						guild
-							.fetchOwner()
-							.then(member => member.createDM())
-							.then(dm =>
-								dm.send({
-									embeds: [
-										new EmbedBuilder()
-											.setTitle('DisCog Global System Announcement')
-											.setDescription(
-												`You are receiving this message because you are the owner of a guild which I am part of, and I have an important system message to deliver to your guild. However, your guild does not have a system channel, so I could not post the announcement. You can set a system channel by going to Server Settings > Overview > System Messages Channel. In the meantime, please use my ${inlineCode(
-													'/announce'
-												)} command to deliver the following message to your guild.`
-											)
-											.setFields(
-												{ name: 'Guild Name', value: guild.name },
-												{ name: 'Message', value: content }
-											)
-									]
-								})
-							);
-						logger.error(e);
-					}
-				}
-				await interaction.editReply(
-					`Done. ${
-						badGuilds.length > 0
-							? `The following guilds did not receive the announcement: ${badGuilds.join(
-									', '
-								)}`
-							: 'All guilds received the announcement.'
-					}`
-				);
-				break;
-			}
 		}
 	},
-	async StringSelectMenu(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		interaction: StringSelectMenuInteraction
-	): Promise<void> {}
+
+	async StringSelectMenu(interaction: StringSelectMenuInteraction) {}
 };

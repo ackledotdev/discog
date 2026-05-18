@@ -7,38 +7,38 @@ import {
 	SlashCommandBuilder
 } from 'discord.js';
 import { Octokit } from 'octokit';
-import { CommandHelpEntry } from '../struct/CommandHelpEntry';
+import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
 
 export const data = new SlashCommandBuilder()
 	.setName('github')
 	.setDescription('Get information about a GitHub user.')
-	.addSubcommand(subcommand => {
+	.addSubcommand((subcommand) => {
 		return subcommand
 			.setName('profile')
 			.setDescription("View a GitHub user's profile.")
-			.addStringOption(option => {
+			.addStringOption((option) => {
 				return option
 					.setName('username')
 					.setDescription('The GitHub username to view.')
 					.setRequired(true);
 			});
 	})
-	.addSubcommand(subcommand => {
-		return subcommand
-			.setName('repos')
-			.setDescription("View a GitHub user's repositories.")
-			.addStringOption(option => {
-				return option
-					.setName('username')
-					.setDescription('The GitHub username to view.')
-					.setRequired(true);
-			});
-	})
-	.addSubcommand(subcommand => {
+	// .addSubcommand((subcommand) => {
+	// 	return subcommand
+	// 		.setName('repos')
+	// 		.setDescription("View a GitHub user's repositories.")
+	// 		.addStringOption((option) => {
+	// 			return option
+	// 				.setName('username')
+	// 				.setDescription('The GitHub username to view.')
+	// 				.setRequired(true);
+	// 		});
+	// })
+	.addSubcommand((subcommand) => {
 		return subcommand
 			.setName('stats')
 			.setDescription("View a GitHub user's stats.")
-			.addStringOption(option => {
+			.addStringOption((option) => {
 				return option
 					.setName('username')
 					.setDescription('The GitHub username to view.')
@@ -64,9 +64,7 @@ const BaseEmbed = (interaction: ChatInputCommandInteraction) =>
 				text: 'Powered by DisCog'
 			}),
 	OctoKit = new Octokit({ userAgent: 'DisCog' });
-const Handlers: {
-	[key: string]: (interaction: ChatInputCommandInteraction) => unknown;
-} = {
+const Handlers = {
 	profile: async (interaction: ChatInputCommandInteraction) => {
 		await interaction.reply({
 			embeds: [BaseEmbed(interaction).setTitle('Github | Profile')]
@@ -126,48 +124,50 @@ const Handlers: {
 				]
 			});
 	},
-	repos: async (interaction: ChatInputCommandInteraction) => {
-		await interaction.reply({
-			embeds: [BaseEmbed(interaction).setTitle('Github | Repositories')]
-		});
-		const username = interaction.options.getString('username', true);
-		const { data } = await OctoKit.rest.repos.listForUser({
-			username: username
-		});
-		if (!data.length)
-			await interaction.editReply({
-				embeds: [
-					BaseEmbed(interaction).setDescription(
-						'This user either has no public repositories or does not exist.'
-					)
-				]
-			});
-		else
-			await interaction.editReply({
-				components: [
-					new ActionRowBuilder<ButtonBuilder>().setComponents(
-						new ButtonBuilder()
-							.setStyle(ButtonStyle.Link)
-							.setLabel('View full list on GitHub')
-							.setURL(`https://github.com/${username}`)
-					)
-				],
-				embeds: [
-					BaseEmbed(interaction)
-						.setDescription(null)
-						.setFields(
-							// @ts-expect-error octokit types are weird
-							...data.map(repo => ({
-								name: repo.name,
-								value:
-									repo.description ??
-									`No description provided.` +
-										`\n${repo.html_url}\n${repo.stargazers_count ?? 0} Stars`
-							}))
-						)
-				]
-			});
-	},
+	// repos: async (interaction: ChatInputCommandInteraction) => {
+	// 	await interaction.reply({
+	// 		embeds: [BaseEmbed(interaction).setTitle('Github | Repositories')]
+	// 	});
+	// 	const username = interaction.options.getString('username', true);
+	// 	const { data } = await OctoKit.rest.repos.listForUser({
+	// 		username: username
+	// 	});
+	// 	if (!data.length)
+	// 		await interaction.editReply({
+	// 			embeds: [
+	// 				BaseEmbed(interaction).setDescription(
+	// 					'This user either has no public repositories or does not exist.'
+	// 				)
+	// 			]
+	// 		});
+	// 	else
+	// 		await interaction.editReply({
+	// 			components: [
+	// 				new ActionRowBuilder<ButtonBuilder>().setComponents(
+	// 					new ButtonBuilder()
+	// 						.setStyle(ButtonStyle.Link)
+	// 						.setLabel('View full list on GitHub')
+	// 						.setURL(`https://github.com/${username}`)
+	// 				)
+	// 			],
+	// 			embeds: [
+	// 				BaseEmbed(interaction)
+	// 					.setDescription(null)
+	// 					.setFields(
+	// 						...data
+	// 							.sort((v) => 0 - (v.stargazers_count ?? 0))
+	// 							.slice(0, 6)
+	// 							.map((repo) => ({
+	// 								name: repo.name,
+	// 								value:
+	// 									repo.description ??
+	// 									`No description provided.` +
+	// 										`\n${repo.html_url}\n${repo.stargazers_count ?? 0} Stars`
+	// 							}))
+	// 					)
+	// 			]
+	// 		});
+	// },
 	stats: async (interaction: ChatInputCommandInteraction) => {
 		await interaction.reply({
 			embeds: [BaseEmbed(interaction).setTitle('Github | Stats')]
@@ -232,6 +232,7 @@ const Handlers: {
 			});
 	}
 };
-
 export const execute = async (interaction: ChatInputCommandInteraction) =>
-	await Handlers[interaction.options.getSubcommand(true)](interaction);
+	await Handlers[
+		interaction.options.getSubcommand(true) as keyof typeof Handlers
+	](interaction);

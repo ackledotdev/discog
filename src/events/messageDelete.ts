@@ -22,8 +22,14 @@ export const execute = async (message: Message) => {
 	await channel.send({
 		embeds: [
 			new EmbedBuilder()
-				.setTitle('Message Deleted')
-				.setDescription(message.content)
+				.setTitle(
+					message.content ? 'Message Deleted' : 'Message Deleted (No Content)'
+				)
+				.setDescription(
+					message.content
+						? message.content
+						: String(message.content) || 'No content available'
+				)
 				.setFields(
 					{
 						name: 'Author',
@@ -44,6 +50,10 @@ export const execute = async (message: Message) => {
 					iconURL: message.guild.members.me?.displayAvatarURL(),
 					text: 'Powered by DisCog'
 				})
-		]
+		],
+		files:
+			message.attachments.size > 0
+				? message.attachments.map((attachment) => attachment.url)
+				: undefined
 	});
 };

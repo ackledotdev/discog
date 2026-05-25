@@ -2,21 +2,15 @@ import 'dotenv/config';
 
 import {
 	ActivityType,
-	CategoryChannel,
-	ChannelType,
 	Colors,
 	EmbedBuilder,
 	Events,
-	ForumChannel,
 	GatewayIntentBits,
-	MediaChannel,
 	OAuth2Scopes,
 	PresenceUpdateStatus,
-	SlashCommandBuilder,
 	TimestampStyles,
 	codeBlock,
-	time,
-	userMention
+	time
 } from 'discord.js';
 import { CommandClient } from './lib/discord/Extend';
 import { METHODS, createServer } from './server';

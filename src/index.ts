@@ -67,7 +67,7 @@ const server = createServer(
 			res.redirect(
 				client.generateInvite({
 					permissions: permissionsBits,
-					scopes: [OAuth2Scopes.Bot, OAuth2Scopes.Guilds, OAuth2Scopes.Identify]
+					scopes: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands]
 				})
 			),
 		method: METHODS.GET,

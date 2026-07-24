@@ -11,3 +11,10 @@ export interface GuildGreetingsConfig {
 	welcomeEnabled: boolean;
 	goodbyeEnabled: boolean;
 }
+
+export interface SingleReactionRoleConfig {
+	roleId: Snowflake;
+	targetMessageId: Snowflake;
+	emoji: string;
+	message: string;
+}

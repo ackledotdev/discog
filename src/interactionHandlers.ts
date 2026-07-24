@@ -9,18 +9,56 @@ import {
 	StringSelectMenuInteraction,
 	UserContextMenuCommandInteraction,
 	codeBlock,
-	inlineCode,
-	time,
-	userMention
+	roleMention,
+	time
 } from 'discord.js';
 import { format } from 'prettier';
-import { logger } from './logger';
-import { getDeveloperIds } from './lib/redis';
 
 export const InteractionHandlers = {
 	async Button(interaction: ButtonInteraction) {
-		switch (interaction.customId) {
-			case '/admin_channel_clear': {
+		if (interaction.customId.startsWith('reactionrole:')) {
+			await interaction.deferReply({
+				ephemeral: true
+			});
+
+			if (!interaction.inGuild() || !interaction.guild || !interaction.member)
+				return await interaction.editReply(
+					'Error: cannot assign role; not in guild.'
+				);
+
+			const roleId = interaction.customId.split(':')[1];
+			const role = interaction.guild.roles.fetch(roleId);
+			if (!role)
+				return await interaction.editReply(
+					'Error: cannot assign role; role not found.'
+				);
+
+			const member = await interaction.guild.members.fetch(interaction.user.id);
+			if (!member.manageable)
+				return await interaction.editReply(
+					'Error: cannot assign role; you are hierarchially superior to this bot.'
+				);
+
+			let added = false;
+			try {
+				if (member.roles.cache.has(roleId)) await member.roles.remove(roleId);
+				else {
+					await member.roles.add(roleId);
+					added = true;
+				}
+
+				await interaction.editReply(
+					`Successfully ${added ? 'added' : 'removed'} role ${roleMention(roleId)}.`
+				);
+			} catch (error) {
+				return await interaction.editReply(
+					'Error: cannot assign role; an error occurred.'
+				);
+			}
+		}
+
+		/**
+			if (interaction.customId === '/admin_channel_clear') {
 				await interaction.deferReply({ ephemeral: true });
 				if (
 					!interaction.inGuild() ||
@@ -49,9 +87,9 @@ export const InteractionHandlers = {
 					}
 				}
 				await interaction.editReply('Deleted all messages in this channel.');
-				break;
+				return;
 			}
-		}
+		*/
 	},
 
 	ContextMenu: {

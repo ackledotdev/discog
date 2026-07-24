@@ -5,13 +5,26 @@ import {
 	channelMention,
 	userMention
 } from 'discord.js';
-import { getGuildAuditLogChannelId } from '../lib/redis';
+import {
+	deleteSingleReactionRole,
+	getGuildAuditLogChannelId,
+	getSingleReactionRole
+} from '../lib/redis';
 
 export const name = Events.MessageDelete;
 export const once = false;
 
 export const execute = async (message: Message) => {
-	if (message.author.bot || !message.inGuild()) return;
+	if (!message.inGuild()) return;
+
+	// if reaction role, delete the reaction role from the database
+	if (
+		message.author.id === message.client.user.id &&
+		!!(await getSingleReactionRole(message.id))
+	)
+		return await deleteSingleReactionRole(message.id);
+
+	if (message.author.bot) return;
 
 	const channelId = await getGuildAuditLogChannelId(message.guild.id);
 	if (!channelId) return;

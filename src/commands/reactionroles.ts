@@ -3,10 +3,12 @@ import {
 	BaseGuildTextChannel,
 	ButtonBuilder,
 	ButtonStyle,
+	channelMention,
 	ChannelType,
 	ChatInputCommandInteraction,
 	EmbedBuilder,
 	InteractionContextType,
+	MessageFlags,
 	parseEmoji,
 	PermissionFlagsBits,
 	roleMention,
@@ -59,7 +61,7 @@ export const help = new CommandHelpEntry(
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.deferReply({
-		ephemeral: true
+		flags: MessageFlags.Ephemeral
 	});
 
 	const subcommand = interaction.options.getSubcommand(true);
@@ -115,17 +117,41 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 				]
 			});
 
-		await channel.send({
-			content: message,
-			components: [
-				new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setCustomId(`reactionrole:${role.id}`)
-						.setLabel(role.name)
-						.setStyle(ButtonStyle.Primary)
-						.setEmoji(emoji)
-				)
-			]
-		});
+		try {
+			await channel.send({
+				content: message,
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setCustomId(`reactionrole:${role.id}`)
+							.setLabel(role.name)
+							.setStyle(ButtonStyle.Primary)
+							.setEmoji(emoji)
+					)
+				]
+			});
+
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle('Success')
+						.setDescription(
+							`Reaction role message sent in ${channelMention(channel.id)}.`
+						)
+						.setColor(0x00ff00)
+				]
+			});
+		} catch (error) {
+			return await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setTitle('Error')
+						.setDescription(
+							`Failed to send message in ${channelMention(channel.id)}.`
+						)
+						.setColor(0xff0000)
+				]
+			});
+		}
 	}
 };

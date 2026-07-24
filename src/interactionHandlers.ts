@@ -4,6 +4,7 @@ import {
 	ButtonInteraction,
 	ContextMenuCommandInteraction,
 	EmbedBuilder,
+	MessageFlags,
 	ModalSubmitInteraction,
 	PermissionFlagsBits,
 	StringSelectMenuInteraction,
@@ -18,7 +19,7 @@ export const InteractionHandlers = {
 	async Button(interaction: ButtonInteraction) {
 		if (interaction.customId.startsWith('reactionrole:')) {
 			await interaction.deferReply({
-				ephemeral: true
+				flags: MessageFlags.Ephemeral
 			});
 
 			if (!interaction.inGuild() || !interaction.guild || !interaction.member)
@@ -59,7 +60,7 @@ export const InteractionHandlers = {
 
 		/**
 			if (interaction.customId === '/admin_channel_clear') {
-				await interaction.deferReply({ ephemeral: true });
+				await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 				if (
 					!interaction.inGuild() ||
 					!interaction.guild ||

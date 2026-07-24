@@ -6,6 +6,7 @@ import {
 	EmbedBuilder,
 	Events,
 	GatewayIntentBits,
+	MessageFlags,
 	OAuth2Scopes,
 	PresenceUpdateStatus,
 	TimestampStyles,
@@ -21,10 +22,8 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger';
 import { readdirSync } from 'fs';
-import { scheduleJob } from 'node-schedule';
 import { Jsoning, JSONValue } from 'jsoning';
 import { Request, Response } from 'express';
-import { CommandHelpEntry } from './lib/class/CommandHelpEntry';
 import { getDeveloperIds, isBlacklisted } from './lib/redis';
 import { Command } from './lib/discord/types';
 
@@ -184,7 +183,7 @@ client
 			) {
 				await interaction.reply({
 					content: 'You are blacklisted from using this bot.',
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				});
 				return;
 			}
@@ -209,7 +208,7 @@ client
 				else
 					await interaction.reply({
 						content: 'There was an error while running this command.',
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					});
 			}
 		} else if (interaction.isModalSubmit()) {
@@ -224,7 +223,7 @@ client
 					else
 						await interaction.reply({
 							content: 'There was an error while running this command.',
-							ephemeral: true
+							flags: MessageFlags.Ephemeral
 						});
 				} catch (e) {
 					logger.error(e);
@@ -238,7 +237,7 @@ client
 				try {
 					await interaction.reply({
 						content: 'There was an error while running this command.',
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					});
 				} catch {
 					await interaction.editReply(
@@ -254,7 +253,7 @@ client
 				try {
 					await interaction.reply({
 						content: 'There was an error while running this command.',
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					});
 				} catch (e) {
 					logger.error(e);
@@ -267,7 +266,7 @@ client
 				try {
 					await interaction.reply({
 						content: 'There was an error while running this command.',
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					});
 				} catch (e) {
 					logger.error(e);
@@ -280,7 +279,7 @@ client
 				try {
 					await interaction.reply({
 						content: 'There was an error while running this command.',
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					});
 				} catch (e) {
 					logger.error(e);
@@ -341,7 +340,7 @@ async function sendError(e: unknown) {
 						})
 						.addFields({
 							name: 'Localized DateTime',
-							value: time(date, TimestampStyles.LongDateTime)
+							value: time(date, TimestampStyles.FullDateShortTime)
 						})
 						.setColor(Colors.Red)
 						.setTimestamp()

@@ -1,7 +1,8 @@
 import {
 	AttachmentBuilder,
 	SlashCommandBuilder,
-	ChatInputCommandInteraction
+	ChatInputCommandInteraction,
+	MessageFlags
 } from 'discord.js';
 import { toCanvas } from 'qrcode';
 import { CommandHelpEntry } from '../lib/class/CommandHelpEntry';
@@ -31,7 +32,7 @@ export const help = new CommandHelpEntry(
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.reply({
 		content: 'Generating QR code...',
-		ephemeral: interaction.options.getBoolean('ephemeral') ?? false
+		flags: interaction.options.getBoolean('ephemeral') ? MessageFlags.Ephemeral : undefined
 	});
 
 	const text = interaction.options.getString('text', true);

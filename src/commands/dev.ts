@@ -1,6 +1,7 @@
 import {
 	ActionRowBuilder,
 	ChatInputCommandInteraction,
+	MessageFlags,
 	ModalBuilder,
 	SlashCommandBuilder,
 	TextInputBuilder,
@@ -94,7 +95,7 @@ export const data = new SlashCommandBuilder()
 	.setDMPermission(true);
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-	await interaction.deferReply({ ephemeral: true });
+	await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
 	if (!isDeveloper(interaction.user.id)) {
 		await interaction.editReply('You are not a developer.');

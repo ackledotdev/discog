@@ -12,9 +12,13 @@ export interface GuildGreetingsConfig {
 	goodbyeEnabled: boolean;
 }
 
-export interface SingleReactionRoleConfig {
-	roleId: Snowflake;
-	targetMessageId: Snowflake;
-	emoji: string;
-	message: string;
+export type ReactionRoleStashKey = `reactionroles:${string}:${string}`;
+
+export interface MultipleReactionRoleStash {
+	channelId: Snowflake | null;
+	message: string | null;
+	roles: {
+		emoji: string | null;
+		roleId: Snowflake;
+	}[];
 }

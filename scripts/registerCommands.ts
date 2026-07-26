@@ -13,15 +13,7 @@ export const commandsPath = join(
 	'commands'
 );
 
-export async function registerCommands(
-	token: string,
-	commandFiles?: string[]
-): Promise<{
-	data: unknown;
-	getCommands: () => Promise<unknown>;
-	rest: REST;
-}> {
-	// eslint-disable-next-line no-param-reassign
+export async function registerCommands(token: string, commandFiles?: string[]) {
 	commandFiles =
 		commandFiles ??
 		(await readdir(commandsPath)).filter((file) => file.endsWith('.ts'));
@@ -40,15 +32,7 @@ export async function registerCommands(
 		commands.push(
 			((await import(join(commandsPath, file))) as Command).data.toJSON()
 		);
-	let data: unknown;
-	const rest = new REST().setToken(token);
-	await rest.put(Routes.applicationCommands(clientId), {
+	await new REST().setToken(token).put(Routes.applicationCommands(clientId), {
 		body: commands
 	});
-	return {
-		data,
-		getCommands: async () =>
-			await rest.get(Routes.applicationCommands(clientId)),
-		rest
-	};
 }

@@ -23,8 +23,6 @@ if (commandFiles.length == 0) {
 
 console.log(`Registering ${commandFiles.length} commands...`);
 
-console.log(
-	await (
-		await registerCommands(process.env.DISCORD_TOKEN as string, commandFiles)
-	).getCommands()
-);
+await registerCommands(process.env.DISCORD_TOKEN as string, commandFiles);
+
+console.log('Commands registered successfully');

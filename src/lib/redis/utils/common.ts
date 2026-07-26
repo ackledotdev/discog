@@ -18,7 +18,7 @@ export async function isDeveloper(id: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sIsMember(KEYS.DEVELOPER_IDS_SET, id);
+	return await client.sIsMember(KEYS.DEVELOPER_IDS_SET, id) === 1;
 }
 
 export async function makeDeveloper(id: Snowflake) {
@@ -46,7 +46,7 @@ export async function isBlacklisted(id: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sIsMember(KEYS.BLACKLIST_IDS_SET, id);
+	return await client.sIsMember(KEYS.BLACKLIST_IDS_SET, id) === 1;
 }
 
 export async function blacklistUser(id: Snowflake) {

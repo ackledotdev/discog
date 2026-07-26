@@ -1,8 +1,10 @@
 import {
 	ActionRowBuilder,
 	ChatInputCommandInteraction,
+	InteractionContextType,
 	MessageFlags,
 	ModalBuilder,
+	PermissionFlagsBits,
 	SlashCommandBuilder,
 	TextInputBuilder,
 	TextInputStyle,
@@ -92,15 +94,18 @@ export const data = new SlashCommandBuilder()
 					});
 			});
 	})
-	.setDMPermission(true);
+	.setContexts(
+		InteractionContextType.BotDM,
+		InteractionContextType.Guild,
+		InteractionContextType.PrivateChannel
+	)
+	.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
 	await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-	if (!isDeveloper(interaction.user.id)) {
-		await interaction.editReply('You are not a developer.');
-		return;
-	}
+	if (!(await isDeveloper(interaction.user.id)))
+		return await interaction.editReply('You are not a developer.');
 
 	switch (interaction.options.getSubcommandGroup()) {
 		case 'blacklist':

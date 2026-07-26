@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { MultipleReactionRoleStash, ReactionRoleStashKey } from '../schema';
 import { Snowflake } from 'discord.js';
 
@@ -30,7 +30,7 @@ const emptyReactionRoleStash = {
 } satisfies MultipleReactionRoleStash;
 
 async function initializeEmptyReactionRoleStash(
-	client: ReturnType<typeof createClient>,
+	client: RedisClientType,
 	key: ReactionRoleStashKey
 ) {
 	await client.json.set(key, '$', emptyReactionRoleStash);

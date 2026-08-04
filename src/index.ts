@@ -24,8 +24,16 @@ import { logger } from './logger';
 import { readdirSync } from 'fs';
 import { Jsoning, JSONValue } from 'jsoning';
 import { Request, Response } from 'express';
-import { getDeveloperIds, isBlacklisted } from './lib/redis';
+import {
+	AUTODELETE_KEYS,
+	autoDeleteEntryKey,
+	fetchAutoDeleteMessages,
+	getDeveloperIds,
+	isBlacklisted
+} from './lib/redis';
 import { Command } from './lib/discord/types';
+import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
+import { createClient } from 'redis';
 
 argv.shift();
 argv.shift();
@@ -59,7 +67,7 @@ const client = new CommandClient({
 		status: PresenceUpdateStatus.Online
 	}
 });
-logger.debug('Created client instance.');
+
 const server = createServer(
 	{
 		handler: (_req: Request, res: Response) =>
@@ -136,14 +144,10 @@ const server = createServer(
 	}
 );
 
-logger.debug('Created server instance.');
-
 const commandsPath = join(dirname(fileURLToPath(import.meta.url)), 'commands');
 const commandFiles = readdirSync(commandsPath).filter((file) =>
 	file.endsWith('.ts')
 );
-
-logger.debug('Loaded command files.');
 
 const cmndb = new Jsoning('botfiles/cmnds.db.json');
 for (const file of commandFiles) {
@@ -159,6 +163,7 @@ for (const file of commandFiles) {
 }
 client.commands.freeze();
 logger.info('Loaded commands.');
+
 const eventsPath = join(cwd(), 'src', 'events');
 const eventFiles = readdirSync(eventsPath).filter((file) =>
 	file.endsWith('.ts')
@@ -170,7 +175,8 @@ for (const file of eventFiles) {
 		client.once(event.name, async (...args) => await event.execute(...args));
 	else client.on(event.name, async (...args) => await event.execute(...args));
 }
-logger.debug('Loaded events.');
+logger.info('Loaded events.');
+
 client
 	.on(Events.ClientReady, () => logger.info('Client#ready'))
 	.on(Events.InteractionCreate, async (interaction) => {
@@ -294,11 +300,50 @@ client
 	})
 	.on(Events.Warn, (m) => logger.warn(m));
 
-logger.debug('Set up client events.');
+const scheduler = new ToadScheduler();
+const autodeleteJob = new SimpleIntervalJob(
+	{
+		// minutes: 1,
+		seconds: 30,
+		runImmediately: true
+	},
+	new AsyncTask('autodelete messages', async () => {
+		const messages = await fetchAutoDeleteMessages();
+		const redisClient = await createClient({
+			url: process.env.REDIS_URL
+		}).connect();
 
-await client
-	.login(process.env.DISCORD_TOKEN)
-	.then(() => logger.info('Logged in.'));
+		const redisOps = [];
+		for (const { messageId, channelId, guildId } of messages) {
+			redisOps.push(
+				redisClient.zRem(
+					AUTODELETE_KEYS.AUTODELETE_SORTSET,
+					autoDeleteEntryKey(guildId, channelId, messageId)
+				)
+			);
+			let channel = await client.channels.fetch(channelId).catch(() => null);
+			if (!channel)
+				channel = await client.guilds
+					.fetch(guildId)
+					.then((guild) => guild.channels.fetch(channelId))
+					.catch(() => null);
+			if (!channel || !channel.isTextBased()) continue;
+			await channel.messages
+				.fetch(messageId)
+				.then((msg) => msg.delete())
+				.catch();
+		}
+		Promise.allSettled(redisOps)
+			.then(() => redisClient.close())
+			.catch(() => redisClient.close());
+	})
+);
+
+client.login(process.env.DISCORD_TOKEN).then(() => {
+	logger.info('Logged in.');
+	scheduler.addSimpleIntervalJob(autodeleteJob);
+	logger.info('Started auto-delete scheduler.');
+});
 
 process.on('SIGINT', () => {
 	sendError(new Error('SIGINT received.'));
@@ -313,7 +358,6 @@ logger.info(`Listening to HTTP server on port ${process.env.PORT ?? PORT}.`);
 
 process.on('uncaughtException', sendError);
 process.on('unhandledRejection', sendError);
-logger.debug('Set up error handling.');
 
 logger.info('Process setup complete.');
 

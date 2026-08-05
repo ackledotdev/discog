@@ -11,14 +11,16 @@ export async function getDeveloperIds() {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sMembers(KEYS.DEVELOPER_IDS_SET);
+	const res = await client.sMembers(KEYS.DEVELOPER_IDS_SET);
+	await client.close();
+	return res;
 }
 
 export async function isDeveloper(id: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sIsMember(KEYS.DEVELOPER_IDS_SET, id) === 1;
+	return (await client.sIsMember(KEYS.DEVELOPER_IDS_SET, id)) === 1;
 }
 
 export async function makeDeveloper(id: Snowflake) {
@@ -26,6 +28,7 @@ export async function makeDeveloper(id: Snowflake) {
 		url: process.env.REDIS_URL
 	}).connect();
 	await client.sAdd(KEYS.DEVELOPER_IDS_SET, id);
+	client.close();
 }
 
 export async function unMakeDeveloper(id: Snowflake) {
@@ -33,20 +36,25 @@ export async function unMakeDeveloper(id: Snowflake) {
 		url: process.env.REDIS_URL
 	}).connect();
 	await client.sRem(KEYS.DEVELOPER_IDS_SET, id);
+	client.close();
 }
 
 export async function getBlacklistIds() {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sMembers(KEYS.BLACKLIST_IDS_SET);
+	const res = await client.sMembers(KEYS.BLACKLIST_IDS_SET);
+	await client.close();
+	return res;
 }
 
 export async function isBlacklisted(id: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.sIsMember(KEYS.BLACKLIST_IDS_SET, id) === 1;
+	const res = (await client.sIsMember(KEYS.BLACKLIST_IDS_SET, id)) === 1;
+	await client.close();
+	return res;
 }
 
 export async function blacklistUser(id: Snowflake) {
@@ -54,6 +62,7 @@ export async function blacklistUser(id: Snowflake) {
 		url: process.env.REDIS_URL
 	}).connect();
 	await client.sAdd(KEYS.BLACKLIST_IDS_SET, id);
+	client.close();
 }
 
 export async function unBlacklistUser(id: Snowflake) {
@@ -61,4 +70,5 @@ export async function unBlacklistUser(id: Snowflake) {
 		url: process.env.REDIS_URL
 	}).connect();
 	await client.sRem(KEYS.BLACKLIST_IDS_SET, id);
+	client.close();
 }

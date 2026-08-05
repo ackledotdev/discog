@@ -247,6 +247,15 @@ const handlers = {
 					'Error: cannot set auto-delete for this channel; invalid channel type.'
 				);
 
+			if (
+				!channel
+					.permissionsFor(interaction.guild!.members.me!)
+					.has('ManageMessages')
+			)
+				return await interaction.editReply(
+					'Error: cannot set auto-delete for this channel; the bot does not have permission to manage messages in this channel.'
+				);
+
 			await setAutoDelete(
 				interaction.guildId!,
 				channel.id,

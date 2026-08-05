@@ -20,6 +20,7 @@ export async function getGuildConfig(guildId: Snowflake) {
 		url: process.env.REDIS_URL
 	}).connect();
 	const config = await client.hGetAll(guildConfigKey(guildId));
+	client.close();
 	return {
 		auditlogChannel: config[GUILD_CONFIG_KEYS.AUDIT_LOG_CHANNEL] || null,
 		systemchannel: config[GUILD_CONFIG_KEYS.SYSTEM_CHANNEL] || null,
@@ -37,10 +38,12 @@ export async function getGuildAuditLogChannelId(guildId: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.hGet(
+	const res = await client.hGet(
 		guildConfigKey(guildId),
 		GUILD_CONFIG_KEYS.AUDIT_LOG_CHANNEL
 	);
+	client.close();
+	return res;
 }
 
 export async function setGuildAuditLogChannel(
@@ -61,16 +64,19 @@ export async function setGuildAuditLogChannel(
 			guildConfigKey(guildId),
 			GUILD_CONFIG_KEYS.AUDIT_LOG_CHANNEL
 		);
+	client.close();
 }
 
 export async function getGuildSystemChannelId(guildId: Snowflake) {
 	const client = await createClient({
 		url: process.env.REDIS_URL
 	}).connect();
-	return await client.hGet(
+	const res = await client.hGet(
 		guildConfigKey(guildId),
 		GUILD_CONFIG_KEYS.SYSTEM_CHANNEL
 	);
+	client.close();
+	return res;
 }
 
 export async function setGuildSystemChannel(
@@ -91,6 +97,7 @@ export async function setGuildSystemChannel(
 			guildConfigKey(guildId),
 			GUILD_CONFIG_KEYS.SYSTEM_CHANNEL
 		);
+	client.close();
 }
 
 export async function getGuildGreetingsConfig(guildId: Snowflake) {
@@ -102,6 +109,7 @@ export async function getGuildGreetingsConfig(guildId: Snowflake) {
 		GUILD_CONFIG_KEYS.GREETINGS_WELCOME_ENABLED,
 		GUILD_CONFIG_KEYS.GREETINGS_GOODBYE_ENABLED
 	]);
+	client.close();
 	return {
 		channel: config[0] || null,
 		welcomeEnabled: config[1] === 'true',
@@ -130,4 +138,5 @@ export async function setGuildGreetingsConfig(
 			GUILD_CONFIG_KEYS.GREETINGS_WELCOME_ENABLED,
 			GUILD_CONFIG_KEYS.GREETINGS_GOODBYE_ENABLED
 		]);
+	client.close();
 }

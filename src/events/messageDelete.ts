@@ -30,7 +30,7 @@ export const execute = async (message: Message) => {
 				.setDescription(
 					message.content
 						? message.content
-						: String(message.content) || 'No content available'
+						: 'No content available'
 				)
 				.setFields(
 					{

@@ -1,12 +1,7 @@
 # DisCog
 
-...is a general-purpose Discord bot. This project has its own website at [discog.localplayer.dev](https://discog.localplayer.dev).
+...is a general-purpose Discord bot with features that I feel like adding.
 
 ## Contributions
 
-All contributions are welcome! We are actively looking for more developers.
-
-### Pre-Commit Tasks
-
-- Run typecheck `tsc`
-- 
+All contributions are welcome!
